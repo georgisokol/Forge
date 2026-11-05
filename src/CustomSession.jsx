@@ -1,0 +1,93 @@
+import { useEffect, useMemo, useState } from 'react'
+
+const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+
+export default function CustomSession({ workout, onFinish }) {
+  const plan = useMemo(
+    () => workout.exercises.flatMap((ex) => Array.from({ length: ex.sets }, (_, i) => ({ ex, n: i + 1 }))),
+    [workout],
+  )
+  const [startedAt, setStartedAt] = useState(null)
+  const [elapsed, setElapsed] = useState(0)
+  const [idx, setIdx] = useState(0)
+  const [logged, setLogged] = useState([])
+  const [reps, setReps] = useState('')
+  const [weight, setWeight] = useState('')
+
+  useEffect(() => {
+    if (!startedAt) return
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 500)
+    return () => clearInterval(t)
+  }, [startedAt])
+
+  const { ex, n } = plan[idx]
+  const isLast = idx === plan.length - 1
+  const lastOfExercise = [...logged].reverse().find((s) => s.exercise === ex.name)
+
+  // Prefill with the previous set of the same exercise so repeated sets are one tap.
+  useEffect(() => {
+    setReps(lastOfExercise ? String(lastOfExercise.actual) : '')
+    setWeight(lastOfExercise?.weight != null ? String(lastOfExercise.weight) : '')
+  }, [idx])
+
+  const finish = (sets) => onFinish(sets, startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0)
+
+  const bank = () => {
+    const entry = {
+      exercise: ex.name, muscles: ex.muscles, unit: ex.timed ? 'sec' : 'reps', planned: null,
+      actual: parseInt(reps, 10) || 0, weight: ex.weighted && weight !== '' ? parseFloat(weight) : null, status: 'done',
+    }
+    const next = [...logged, entry]
+    setLogged(next)
+    if (isLast) return finish(next)
+    setIdx(idx + 1)
+  }
+
+  const skip = () => setIdx(idx + 1)
+
+  if (!startedAt) {
+    return (
+      <div className="screen">
+        <div className="topbar"><div className="muted">{plan.length} sets</div><div className="timer">00:00</div></div>
+        <div className="slot">{workout.name}</div>
+        <div className="card">
+          {workout.exercises.map((x) => (
+            <div key={x.key} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+              <span>{x.name}</span><span className="muted">{x.sets} sets</span>
+            </div>
+          ))}
+        </div>
+        <button className="btn" onClick={() => setStartedAt(Date.now())}>Start Session</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="screen">
+      <div className="topbar">
+        <div className="muted">Set {idx + 1} / {plan.length}</div>
+        <div className="timer">{fmt(elapsed)}</div>
+      </div>
+      <div className="slot">{ex.name}</div>
+      <div className="target">Set {n} of {ex.sets}</div>
+      <div className="row">
+        <div>
+          <div className="muted" style={{ marginBottom: 6 }}>{ex.timed ? 'Seconds' : 'Reps'}</div>
+          <input className="input big" type="number" inputMode="numeric" min="0" value={reps} onChange={(e) => setReps(e.target.value)} />
+        </div>
+        {ex.weighted && !ex.timed && (
+          <div>
+            <div className="muted" style={{ marginBottom: 6 }}>Weight (kg)</div>
+            <input className="input big" type="number" inputMode="decimal" min="0" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
+          </div>
+        )}
+      </div>
+      <div style={{ flex: 1 }} />
+      <button className="btn bank" disabled={reps === ''} onClick={bank}>{isLast ? 'Bank & Finish Workout' : 'Bank'}</button>
+      <div className="row">
+        <button className="btn skip" disabled={isLast} onClick={skip}>Skip set</button>
+        <button className="btn finish" disabled={logged.length === 0} onClick={() => finish(logged)}>Finish Workout</button>
+      </div>
+    </div>
+  )
+}

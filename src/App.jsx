@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { CATEGORIES, LEVELS } from './data.js'
-import { getProfile, saveProfile, saveWorkout } from './storage.js'
+import { getCustomWorkouts, getProfile, saveProfile, saveWorkout } from './storage.js'
 import Session from './Session.jsx'
 import Summary from './Summary.jsx'
 import History from './History.jsx'
 import Header from './Header.jsx'
+import Create from './Create.jsx'
+import CustomSession from './CustomSession.jsx'
 
 const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
@@ -15,6 +17,7 @@ export default function App() {
   const [level, setLevel] = useState(null)
   const [sets, setSets] = useState(10)
   const [pending, setPending] = useState(null)
+  const [custom, setCustom] = useState(null)
 
   useEffect(() => {
     if (screen !== 'splash') return
@@ -32,6 +35,7 @@ export default function App() {
       </div>
       <div className="split">
         <button className="btn" onClick={() => setScreen('category')}>Start Workout</button>
+        <button className="btn ghost" onClick={() => setScreen('create')}>Create Your Own</button>
         <button className="btn ghost" onClick={() => setScreen('history')}>History</button>
       </div>
     </div>
@@ -42,6 +46,11 @@ export default function App() {
       {Object.entries(CATEGORIES).map(([key, c]) => (
         <button key={key} className="btn ghost cat" style={{ '--c': c.color }} onClick={() => { setCategory(key); setScreen('level') }}>
           {c.label}{c.sub && <div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>{c.sub}</div>}
+        </button>
+      ))}
+      {getCustomWorkouts().map((w) => (
+        <button key={w.id} className="btn ghost cat" style={{ '--c': w.color }} onClick={() => { setCustom(w); setScreen('customSession') }}>
+          {w.name}<div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>custom · {w.exercises.length} exercises</div>
         </button>
       ))}
     </div>
@@ -76,6 +85,16 @@ export default function App() {
       totalSets={sets}
       onFinish={(logged, duration) => {
         setPending({ id: Date.now(), date: new Date().toISOString(), category, level, sets: logged, duration })
+        setScreen('summary')
+      }}
+    />
+  )
+  if (screen === 'create') return <Create onBack={() => setScreen('home')} />
+  if (screen === 'customSession') return (
+    <CustomSession
+      workout={custom}
+      onFinish={(logged, duration) => {
+        setPending({ id: Date.now(), date: new Date().toISOString(), category: `custom_${custom.id}`, categoryLabel: custom.name, categoryColor: custom.color, level: 'custom', sets: logged, duration })
         setScreen('summary')
       }}
     />

@@ -7,7 +7,7 @@ export const CATEGORIES = {
 }
 
 export const LEVELS = {
-  beginner: { label: 'Beginner', sets: [6, 10], reps: { 1: [6, 10], 2: [4, 7], 3: [3, 5] } },
+  beginner: { label: 'Beginner', sets: [6, 10], reps: { 1: [5, 8], 2: [3, 5], 3: [2, 4] } },
   intermediate: { label: 'Intermediate', sets: [10, 20], reps: { 1: [10, 15], 2: [7, 11], 3: [5, 8] } },
   elite: { label: 'Elite', sets: [20, 30], reps: { 1: [15, 20], 2: [12, 15], 3: [8, 12] } },
 }
@@ -80,17 +80,12 @@ export const categoryForSet = (category, setIndex) =>
   category === 'combo' ? (setIndex % 2 === 0 ? 'push' : 'pull') : category
 
 // Exercises allowed for this set given level, position and the previously logged tier.
-export function candidatePool({ category, level, setIndex, totalSets, prevTier }) {
+export function candidatePool({ category, level, setIndex, prevTier }) {
   const list = EXERCISES[categoryForSet(category, setIndex)]
-  let pool = list
-  if (level === 'beginner') {
-    const late = setIndex >= Math.ceil(totalSets / 2)
-    pool = list.filter((x) => x.tier === 1 || (totalSets > 8 && late && x.tier === 2))
-  } else if (level === 'intermediate') {
-    pool = list.filter((x) => !x.eliteOnly)
-    if (prevTier === 3) pool = pool.filter((x) => x.tier !== 3)
-  }
-  return pool
+  if (level === 'elite') return list
+  // Beginner and intermediate share the pool (no elite-only moves); no back-to-back Tier 3.
+  const pool = list.filter((x) => !x.eliteOnly)
+  return prevTier === 3 ? pool.filter((x) => x.tier !== 3) : pool
 }
 
 // Reps for normal exercises; hold seconds (multiples of 5) for timed ones.
@@ -117,3 +112,16 @@ export function muscleCounts(sets) {
 }
 
 export const totalReps = (sets) => sets.filter((s) => !isTimed(s)).reduce((a, s) => a + s.actual, 0)
+
+export const MUSCLES = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Core', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Forearms', 'Lower Back']
+
+export const catInfo = (w) => CATEGORIES[w.category] ?? { label: w.categoryLabel ?? 'Custom', color: w.categoryColor ?? '#ff7a1a' }
+export const levelLabel = (w) => LEVELS[w.level]?.label ?? 'Custom'
+
+export const fmtSet = (s) => {
+  if (s.planned != null) return `${s.actual}/${s.planned}${isTimed(s) ? 's' : ''}`
+  const base = isTimed(s) ? `${s.actual}s` : `${s.actual} reps`
+  return s.weight != null ? `${base} @ ${s.weight}kg` : base
+}
+
+export const totalTonnage = (sets) => sets.reduce((a, s) => a + (s.weight && !isTimed(s) ? s.weight * s.actual : 0), 0)
