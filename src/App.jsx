@@ -9,6 +9,7 @@ export default function App() {
   const [screen, setScreen] = useState('splash')
   const [category, setCategory] = useState(null)
   const [level, setLevel] = useState(null)
+  const [sets, setSets] = useState(10)
 
   useEffect(() => {
     if (screen !== 'splash') return
@@ -43,16 +44,32 @@ export default function App() {
       <button className="back" onClick={() => setScreen('category')}>← Back</button>
       <h2>Choose level</h2>
       {Object.entries(LEVELS).map(([key, l]) => (
-        <button key={key} className="btn ghost" onClick={() => { setLevel(key); setScreen('session') }}>
+        <button key={key} className="btn ghost" onClick={() => { setLevel(key); setSets(Math.round((l.sets[0] + l.sets[1]) / 2)); setScreen('sets') }}>
           {l.label}<div className="muted" style={{ fontSize: '.8rem', fontWeight: 400 }}>{l.sets[0]}–{l.sets[1]} sets</div>
         </button>
       ))}
+    </div>
+  )
+  if (screen === 'sets') return (
+    <div className="screen">
+      <button className="back" onClick={() => setScreen('level')}>← Back</button>
+      <h2>How many sets?</h2>
+      <p className="muted">Suggested for {LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]}</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        {[6, 8, 10, 12, 15, 18, 20, 24, 26, 30].map((n) => (
+          <button key={n} className={`tab ${sets === n ? 'active' : ''}`} style={{ flex: '0 0 22%' }} onClick={() => setSets(n)}>{n}</button>
+        ))}
+      </div>
+      <input className="input" type="number" inputMode="numeric" min="1" max="60" value={sets} onChange={(e) => setSets(Math.min(60, Math.max(1, parseInt(e.target.value, 10) || 1)))} />
+      <div style={{ flex: 1 }} />
+      <button className="btn" onClick={() => setScreen('session')}>Start · {sets} sets</button>
     </div>
   )
   if (screen === 'session') return (
     <Session
       category={category}
       level={level}
+      totalSets={sets}
       onFinish={(sets) => {
         if (sets.length) saveWorkout({ id: Date.now(), date: new Date().toISOString(), category, level, sets })
         setScreen(sets.length ? 'history' : 'home')

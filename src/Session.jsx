@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, categoryForSet, candidatePool, pickExercise, rollReps, rollSets, totalSeconds } from './data.js'
+import { CATEGORIES, categoryForSet, candidatePool, pickExercise, rollReps, totalSeconds } from './data.js'
 
 const MAX_SKIPS = 2
 const fmt = (s) => {
@@ -7,8 +7,7 @@ const fmt = (s) => {
   return `${s < 0 ? '+' : ''}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
 }
 
-export default function Session({ category, level, onFinish }) {
-  const [totalSets] = useState(() => rollSets(level))
+export default function Session({ category, level, totalSets, onFinish }) {
   const budget = totalSeconds(totalSets)
   const [setIndex, setSetIndex] = useState(0)
   const [logged, setLogged] = useState([])
