@@ -56,11 +56,10 @@ export default function App() {
       <h2>How many sets?</h2>
       <p className="muted">Suggested for {LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]}</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {[6, 8, 10, 12, 15, 18, 20, 24, 26, 30].map((n) => (
+        {Array.from({ length: LEVELS[level].sets[1] - LEVELS[level].sets[0] + 1 }, (_, i) => LEVELS[level].sets[0] + i).map((n) => (
           <button key={n} className={`tab ${sets === n ? 'active' : ''}`} style={{ flex: '0 0 22%' }} onClick={() => setSets(n)}>{n}</button>
         ))}
       </div>
-      <input className="input" type="number" inputMode="numeric" min="1" max="60" value={sets} onChange={(e) => setSets(Math.min(60, Math.max(1, parseInt(e.target.value, 10) || 1)))} />
       <div style={{ flex: 1 }} />
       <button className="btn" onClick={() => setScreen('session')}>Start · {sets} sets</button>
     </div>
