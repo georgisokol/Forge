@@ -1,21 +1,17 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { CATEGORIES, LEVELS } from './data.js'
+import { CATEGORIES, LEVELS, isTimed, totalReps } from './data.js'
 import { getHistory } from './storage.js'
+import Header from './Header.jsx'
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: '2-digit' })
-const totals = (w) => {
-  const reps = w.sets.reduce((a, s) => a + s.actual, 0)
-  return { reps, volume: reps * w.sets.length }
-}
 
 export default function History({ onBack }) {
   const [tab, setTab] = useState('log')
   const history = useMemo(() => [...getHistory()].reverse(), [])
   return (
     <div className="screen">
-      <button className="back" onClick={onBack}>← Home</button>
-      <h2>History</h2>
+      <Header title="History" onBack={onBack} />
       <div className="tabs">
         <button className={`tab ${tab === 'log' ? 'active' : ''}`} onClick={() => setTab('log')}>Log</button>
         <button className={`tab ${tab === 'graph' ? 'active' : ''}`} onClick={() => setTab('graph')}>Progress</button>
@@ -53,7 +49,7 @@ function Row({ w, open, toggle }) {
           {w.sets.map((s, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
               <span>{i + 1}. {s.exercise}</span>
-              <span className={s.status}>{s.actual}/{s.planned} · {s.status === 'done' ? 'Done' : 'Failed'}</span>
+              <span className={s.status}>{s.actual}/{s.planned}{isTimed(s) ? 's' : ''} · {s.status === 'done' ? 'Banked' : 'Failed'}</span>
             </div>
           ))}
         </td></tr>
@@ -72,27 +68,29 @@ const Marker = ({ cx, cy, payload, levelKey, color }) => {
 }
 
 function Graph({ history }) {
-  const data = useMemo(() => [...history].reverse().map((w) => {
-    const t = totals(w)
-    return { date: fmtDate(w.date), [`${w.category}_reps`]: t.reps, [`${w.category}_vol`]: t.volume, [`${w.category}_lvl`]: w.level }
-  }), [history])
+  const data = useMemo(() => [...history].reverse().map((w) => ({
+    date: fmtDate(w.date),
+    [`${w.category}_reps`]: totalReps(w.sets),
+    [`${w.category}_sets`]: w.sets.length,
+    [`${w.category}_lvl`]: w.level,
+  })), [history])
   const used = Object.keys(CATEGORIES).filter((k) => history.some((w) => w.category === k))
   return (
     <>
       <div style={{ width: '100%', height: 340 }}>
         <ResponsiveContainer>
           <LineChart data={data} margin={{ left: -10, right: -10 }}>
-            <CartesianGrid stroke="#2a2a2a" />
-            <XAxis dataKey="date" stroke="#8a8a8a" fontSize={11} />
-            <YAxis yAxisId="l" stroke="#8a8a8a" fontSize={11} />
-            <YAxis yAxisId="r" orientation="right" stroke="#8a8a8a" fontSize={11} />
-            <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }} />
+            <CartesianGrid stroke="#2e251e" />
+            <XAxis dataKey="date" stroke="#9a8a7c" fontSize={11} />
+            <YAxis yAxisId="l" stroke="#9a8a7c" fontSize={11} />
+            <YAxis yAxisId="r" orientation="right" stroke="#9a8a7c" fontSize={11} allowDecimals={false} />
+            <Tooltip contentStyle={{ background: '#1b1511', border: '1px solid #2e251e' }} />
             <Legend />
             {used.flatMap((k) => {
               const color = CATEGORIES[k].color
               return [
                 <Line key={`${k}r`} yAxisId="l" type="monotone" connectNulls dataKey={`${k}_reps`} name={`${CATEGORIES[k].label} reps`} stroke={color} strokeWidth={2} dot={(p) => <Marker key={p.index} {...p} levelKey={`${k}_lvl`} color={color} />} />,
-                <Line key={`${k}v`} yAxisId="r" type="monotone" connectNulls dataKey={`${k}_vol`} name={`${CATEGORIES[k].label} volume`} stroke={color} strokeDasharray="5 4" strokeWidth={1.5} dot={false} />,
+                <Line key={`${k}s`} yAxisId="r" type="monotone" connectNulls dataKey={`${k}_sets`} name={`${CATEGORIES[k].label} sets`} stroke={color} strokeDasharray="5 4" strokeWidth={1.5} dot={false} />,
               ]
             })}
           </LineChart>
@@ -100,7 +98,7 @@ function Graph({ history }) {
       </div>
       <div className="legend">
         <span>● Beginner</span><span>■ Intermediate</span><span>◆ Elite</span>
-        <span>Solid = reps (left) · Dashed = volume (right)</span>
+        <span>Solid = total reps (left) · Dashed = sets (right)</span>
       </div>
     </>
   )

@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import { CATEGORIES, LEVELS } from './data.js'
 import { getProfile, saveProfile, saveWorkout } from './storage.js'
 import Session from './Session.jsx'
+import Summary from './Summary.jsx'
 import History from './History.jsx'
+import Header from './Header.jsx'
+
+const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
 export default function App() {
   const [profile, setProfile] = useState(getProfile)
@@ -10,6 +14,7 @@ export default function App() {
   const [category, setCategory] = useState(null)
   const [level, setLevel] = useState(null)
   const [sets, setSets] = useState(10)
+  const [pending, setPending] = useState(null)
 
   useEffect(() => {
     if (screen !== 'splash') return
@@ -21,17 +26,19 @@ export default function App() {
   if (screen === 'nickname') return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); setProfile(p); setScreen('home') }} />
   if (screen === 'home') return (
     <div className="screen">
-      <h1>Hey, {profile.nickname}</h1>
-      <p className="muted">Time to forge.</p>
-      <div style={{ flex: 1 }} />
-      <button className="btn" onClick={() => setScreen('category')}>Start Workout</button>
-      <button className="btn ghost" onClick={() => setScreen('history')}>History</button>
+      <div>
+        <h1>Hey, {profile.nickname}</h1>
+        <p className="muted" style={{ margin: '6px 0 0' }}>Time to forge.</p>
+      </div>
+      <div className="split">
+        <button className="btn" onClick={() => setScreen('category')}>Start Workout</button>
+        <button className="btn ghost" onClick={() => setScreen('history')}>History</button>
+      </div>
     </div>
   )
   if (screen === 'category') return (
     <div className="screen">
-      <button className="back" onClick={() => setScreen('home')}>← Back</button>
-      <h2>Choose category</h2>
+      <Header title="Choose category" onBack={() => setScreen('home')} />
       {Object.entries(CATEGORIES).map(([key, c]) => (
         <button key={key} className="btn ghost cat" style={{ '--c': c.color }} onClick={() => { setCategory(key); setScreen('level') }}>
           {c.label}{c.sub && <div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>{c.sub}</div>}
@@ -41,8 +48,7 @@ export default function App() {
   )
   if (screen === 'level') return (
     <div className="screen">
-      <button className="back" onClick={() => setScreen('category')}>← Back</button>
-      <h2>Choose level</h2>
+      <Header title="Choose level" onBack={() => setScreen('category')} />
       {Object.entries(LEVELS).map(([key, l]) => (
         <button key={key} className="btn ghost" onClick={() => { setLevel(key); setSets(Math.round((l.sets[0] + l.sets[1]) / 2)); setScreen('sets') }}>
           {l.label}<div className="muted" style={{ fontSize: '.8rem', fontWeight: 400 }}>{l.sets[0]}–{l.sets[1]} sets</div>
@@ -52,16 +58,15 @@ export default function App() {
   )
   if (screen === 'sets') return (
     <div className="screen">
-      <button className="back" onClick={() => setScreen('level')}>← Back</button>
-      <h2>How many sets?</h2>
-      <p className="muted">Suggested for {LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]}</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {Array.from({ length: LEVELS[level].sets[1] - LEVELS[level].sets[0] + 1 }, (_, i) => LEVELS[level].sets[0] + i).map((n) => (
-          <button key={n} className={`chip ${sets === n ? 'active' : ''}`} style={{ flex: '0 0 calc(20% - 8px)' }} onClick={() => setSets(n)}>{n}</button>
+      <Header title="How many sets?" onBack={() => setScreen('level')} />
+      <p className="muted" style={{ margin: 0 }}>{LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]} sets</p>
+      <div className="chips">
+        {setOptions(LEVELS[level].sets).map((n) => (
+          <button key={n} className={`chip ${sets === n ? 'active' : ''}`} onClick={() => setSets(n)}>{n}</button>
         ))}
       </div>
       <div style={{ flex: 1 }} />
-      <button className="btn" onClick={() => setScreen('session')}>Start · {sets} sets</button>
+      <button className="btn" onClick={() => setScreen('session')}>Continue · {sets} sets</button>
     </div>
   )
   if (screen === 'session') return (
@@ -69,10 +74,17 @@ export default function App() {
       category={category}
       level={level}
       totalSets={sets}
-      onFinish={(sets) => {
-        if (sets.length) saveWorkout({ id: Date.now(), date: new Date().toISOString(), category, level, sets })
-        setScreen(sets.length ? 'history' : 'home')
+      onFinish={(logged, duration) => {
+        setPending({ id: Date.now(), date: new Date().toISOString(), category, level, sets: logged, duration })
+        setScreen('summary')
       }}
+    />
+  )
+  if (screen === 'summary') return (
+    <Summary
+      workout={pending}
+      onSave={() => { saveWorkout(pending); setPending(null); setScreen('history') }}
+      onDiscard={() => { setPending(null); setScreen('home') }}
     />
   )
   return <History onBack={() => setScreen('home')} />

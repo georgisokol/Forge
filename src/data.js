@@ -2,7 +2,7 @@ export const CATEGORIES = {
   push: { label: 'Push', color: '#3b82f6' },
   pull: { label: 'Pull', color: '#f97316' },
   combo: { label: 'Push/Pull Combo', color: '#a855f7' },
-  legsFront: { label: 'Legs Front', sub: 'quad / tibialis', color: '#22c55e' },
+  legsFront: { label: 'Legs Front', sub: 'quad / tibialis', color: '#84982f' },
   legsBack: { label: 'Legs Back', sub: 'hamstring / glute / calves', color: '#eab308' },
 }
 
@@ -12,40 +12,67 @@ export const LEVELS = {
   elite: { label: 'Elite', sets: [20, 30], reps: { 1: [15, 20], 2: [12, 15], 3: [8, 12] } },
 }
 
-const e = (name, tier, eliteOnly = false) => ({ name, tier, eliteOnly })
+// Timed exercises are held for seconds instead of repped.
+export const HOLD_SECONDS = { beginner: [20, 30], intermediate: [30, 45], elite: [45, 60] }
+
+const e = (name, tier, muscles, opts = {}) => ({ name, tier, muscles, eliteOnly: false, timed: false, ...opts })
 
 export const EXERCISES = {
   push: [
-    e('Push-ups', 1), e('Wide Push-ups', 1),
-    e('Diamond Push-ups', 2), e('Pike Push-ups', 2), e('Tricep Dips (bench)', 2), e('Tricep Extensions', 2), e('Archer Push-ups', 2),
-    e('Dips', 3), e('Straight Bar Dips', 3), e('Elevated Pike Push-ups', 3, true), e('Pseudo Planche Push-ups', 3, true),
+    e('Push-ups', 1, ['Chest', 'Triceps', 'Shoulders']),
+    e('Wide Push-ups', 1, ['Chest', 'Shoulders']),
+    e('Diamond Push-ups', 2, ['Triceps', 'Chest']),
+    e('Pike Push-ups', 2, ['Shoulders', 'Triceps']),
+    e('Tricep Dips (bench)', 2, ['Triceps']),
+    e('Tricep Extensions', 2, ['Triceps']),
+    e('Archer Push-ups', 2, ['Chest', 'Shoulders', 'Triceps']),
+    e('Dips', 3, ['Chest', 'Triceps', 'Shoulders']),
+    e('Straight Bar Dips', 3, ['Triceps', 'Chest']),
+    e('Elevated Pike Push-ups', 3, ['Shoulders', 'Triceps'], { eliteOnly: true }),
+    e('Pseudo Planche Push-ups', 3, ['Shoulders', 'Chest', 'Core'], { eliteOnly: true }),
   ],
   pull: [
-    e('Australian Pull-ups', 1), e('Negative Pull-ups', 1),
-    e('Chin-ups', 2), e('Wide Chin-ups', 2), e('Close Grip Pull-ups', 2), e('Commando Pull-ups', 2),
-    e('Pull-ups', 3), e('Wide Pull-ups', 3), e('Headbanger Pull-ups', 3), e('L-Knee Sit Pull-ups/Chin-ups', 3),
-    e('1s Pause Pull-up', 3), e('Typewriter Pull-ups', 3, true),
+    e('Australian Pull-ups', 1, ['Back', 'Biceps', 'Rear Delts']),
+    e('Negative Pull-ups', 1, ['Back', 'Biceps']),
+    e('Chin-ups', 2, ['Biceps', 'Back']),
+    e('Wide Chin-ups', 2, ['Back', 'Biceps']),
+    e('Close Grip Pull-ups', 2, ['Back', 'Biceps']),
+    e('Commando Pull-ups', 2, ['Back', 'Biceps', 'Core']),
+    e('Pull-ups', 3, ['Back', 'Biceps']),
+    e('Wide Pull-ups', 3, ['Back', 'Biceps']),
+    e('Headbanger Pull-ups', 3, ['Back', 'Biceps', 'Shoulders']),
+    e('L-Knee Sit Pull-ups/Chin-ups', 3, ['Back', 'Biceps', 'Core']),
+    e('1s Pause Pull-up', 3, ['Back', 'Biceps']),
+    e('Typewriter Pull-ups', 3, ['Back', 'Biceps', 'Core'], { eliteOnly: true }),
   ],
   legsFront: [
-    e('Squats', 1), e('Sumo Squats', 1), e('Wall Sit', 1),
-    e('Split Squats', 2), e('Poliquin Step-ups', 2), e('Tibialis Raises', 2), e('Cossack Squats', 2),
-    e('Pistol Squats', 3), e('One-Leg Squats', 3),
+    e('Squats', 1, ['Quads', 'Glutes']),
+    e('Sumo Squats', 1, ['Quads', 'Glutes', 'Inner Thighs']),
+    e('Wall Sit', 1, ['Quads'], { timed: true }),
+    e('Split Squats', 2, ['Quads', 'Glutes']),
+    e('Poliquin Step-ups', 2, ['Quads', 'Glutes']),
+    e('Tibialis Raises', 2, ['Tibialis']),
+    e('Cossack Squats', 2, ['Quads', 'Inner Thighs', 'Glutes']),
+    e('Pistol Squats', 3, ['Quads', 'Glutes', 'Core']),
+    e('One-Leg Squats', 3, ['Quads', 'Glutes']),
   ],
   legsBack: [
-    e('Glute Bridges', 1), e('Calf Raises', 1),
-    e('Hip Thrust', 2), e('Leg Kicks (glute)', 2), e('Side Kicks (glute)', 2),
-    e('Romanian Deadlift (single-leg)', 3), e('Nordic Curl', 3, true),
+    e('Glute Bridges', 1, ['Glutes', 'Hamstrings']),
+    e('Calf Raises', 1, ['Calves']),
+    e('Hip Thrust', 2, ['Glutes', 'Hamstrings']),
+    e('Leg Kicks (glute)', 2, ['Glutes']),
+    e('Side Kicks (glute)', 2, ['Glutes']),
+    e('Romanian Deadlift (single-leg)', 3, ['Hamstrings', 'Glutes', 'Lower Back']),
+    e('Nordic Curl', 3, ['Hamstrings'], { eliteOnly: true }),
   ],
 }
 
-export const REST_RANGE = [45, 70]
 const AVG_REST = 60
 const AVG_SET_TIME = 40
 
 export const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
 
-export const rollSets = (level) => rand(...LEVELS[level].sets)
 export const totalSeconds = (sets) => sets * (AVG_REST + AVG_SET_TIME)
 
 // Category used for a given 0-based set index (combo alternates push → pull).
@@ -66,11 +93,27 @@ export function candidatePool({ category, level, setIndex, totalSets, prevTier }
   return pool
 }
 
-export function rollReps(level, tier) {
-  return rand(...LEVELS[level].reps[tier])
+// Reps for normal exercises; hold seconds (multiples of 5) for timed ones.
+export function rollTarget(level, ex) {
+  if (ex.timed) {
+    const [min, max] = HOLD_SECONDS[level]
+    return rand(min / 5, max / 5) * 5
+  }
+  return rand(...LEVELS[level].reps[ex.tier])
 }
 
 export const pickExercise = (pool, exclude = []) => {
   const filtered = pool.filter((x) => !exclude.includes(x.name))
   return pick(filtered.length ? filtered : pool)
 }
+
+export const isTimed = (s) => s.unit === 'sec'
+
+// [[muscle, setsHit], ...] sorted by most worked first.
+export function muscleCounts(sets) {
+  const counts = {}
+  sets.forEach((s) => (s.muscles || []).forEach((m) => { counts[m] = (counts[m] || 0) + 1 }))
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])
+}
+
+export const totalReps = (sets) => sets.filter((s) => !isTimed(s)).reduce((a, s) => a + s.actual, 0)
