@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       includeAssets: ['icon-180.png'],
       manifest: {
         name: 'Forge',

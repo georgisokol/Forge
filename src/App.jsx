@@ -57,7 +57,7 @@ export default function App() {
       <p className="muted">Suggested for {LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]}</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
         {Array.from({ length: LEVELS[level].sets[1] - LEVELS[level].sets[0] + 1 }, (_, i) => LEVELS[level].sets[0] + i).map((n) => (
-          <button key={n} className={`tab ${sets === n ? 'active' : ''}`} style={{ flex: '0 0 22%' }} onClick={() => setSets(n)}>{n}</button>
+          <button key={n} className={`chip ${sets === n ? 'active' : ''}`} style={{ flex: '0 0 calc(20% - 8px)' }} onClick={() => setSets(n)}>{n}</button>
         ))}
       </div>
       <div style={{ flex: 1 }} />
