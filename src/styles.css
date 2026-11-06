@@ -87,20 +87,3 @@ button, input { font:inherit; }
 .mchip { padding:7px 12px; border-radius:99px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); cursor:pointer; font-size:.8rem; }
 .mchip.active { border-color:var(--yellow); color:var(--yellow); background:var(--yellow-dim); }
 input[type=checkbox] { accent-color:var(--yellow); }
-
-/* Elevation: top highlight + bottom edge + soft drop shadow; pressed state sinks */
-.btn { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(0,0,0,.28), 0 6px 14px rgba(0,0,0,.5); transition: transform .08s, box-shadow .08s, filter .08s; }
-.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), inset 0 -1px 0 rgba(0,0,0,.28), 0 2px 5px rgba(0,0,0,.5); filter:none; }
-.btn:disabled { box-shadow:none; }
-.btn:not(.ghost):not(.skip):not(.finish):not(.fail):not(.bank) { box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -3px 0 rgba(0,0,0,.25), 0 8px 20px rgba(242,183,5,.22); }
-.btn.bank { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -3px 0 rgba(0,0,0,.3), 0 8px 20px rgba(212,154,28,.2); }
-.btn.fail { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 0 rgba(0,0,0,.35), 0 8px 20px rgba(110,20,35,.35); }
-.btn.ghost, .btn.skip { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.35), 0 6px 14px rgba(0,0,0,.45); }
-.btn.finish { box-shadow: inset 0 0 0 0 transparent, 0 0 18px rgba(242,183,5,.18), 0 6px 14px rgba(0,0,0,.45); }
-.card, .slot { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 24px rgba(0,0,0,.4); }
-.chip { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.4); transition: transform .08s; }
-.chip:active { transform: translateY(2px); }
-.chip.active { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 16px rgba(242,183,5,.25); }
-.tab { box-shadow: inset 0 -2px 0 rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.35); }
-.tab.active { box-shadow: 0 0 14px rgba(242,183,5,.2); }
-.pick, .table .detail { box-shadow:none; }
