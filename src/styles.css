@@ -24,8 +24,8 @@ button, input { font:inherit; }
 .btn:active { filter:brightness(.92); }
 .btn:disabled { opacity:.3; cursor:not-allowed; }
 .btn.ghost { background:var(--panel); color:var(--text); border:1px solid var(--line); }
-.btn.bank { background:linear-gradient(135deg,var(--olive),var(--olive2)); color:#fff; font-size:1.5rem; padding:22px; }
-.btn.fail { background:linear-gradient(135deg,var(--brick),var(--brick2)); color:#fff; }
+.btn.bank { background:linear-gradient(135deg,#d49a1c,#a8741a); color:#1a1206; font-size:1.5rem; padding:22px; }
+.btn.fail { background:linear-gradient(135deg,#6e1423,#45101b); color:#f3dcdc; border:1px solid #8a2236; }
 .btn.skip { background:var(--panel2); border:1px solid var(--line); color:var(--muted); }
 .btn.finish { background:transparent; border:1.5px solid var(--yellow); color:var(--yellow); }
 .btn.small { padding:10px 14px; font-size:1rem; width:auto; }
@@ -66,7 +66,7 @@ button, input { font:inherit; }
 .hold .time { font-family:var(--display); font-size:clamp(3.4rem, 18vw, 5.4rem); font-weight:700; font-variant-numeric:tabular-nums; }
 .timer { font-family:var(--display); font-variant-numeric:tabular-nums; font-size:1.8rem; font-weight:600; color:var(--yellow); letter-spacing:.06em; }
 .timer.over { color:var(--brick); filter:brightness(1.4); }
-.done { color:var(--olive); filter:brightness(1.4); } .failed { color:#e0584a; }
+.done { color:#d9a21f; } .failed { color:#d0556a; }
 
 .legend { flex-direction:column; gap:10px; font-size:.8rem; color:var(--muted); display:flex; }
 .legend-row { display:flex; flex-wrap:wrap; gap:6px 16px; }
