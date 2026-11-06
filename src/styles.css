@@ -32,11 +32,6 @@ h1 { font-size:2.6rem; line-height:1.05; }
 .setno b { color:var(--yellow); font-weight:700; }
 
 
-.table { width:100%; border-collapse:collapse; }
-.table td, .table th { padding:20px 8px; border-bottom:1px solid var(--line); text-align:left; font-size:1.05rem; }
-.table th { font-size:.72rem; font-weight:400; color:var(--muted); text-transform:uppercase; letter-spacing:.2em; }
-.table tr.click { cursor:pointer; }
-.table .detail { display:flex; justify-content:space-between; gap:10px; padding:9px 0; font-size:.95rem; }
 
 .slot { flex:1; min-height:200px; font-family:var(--display); font-size:clamp(2.6rem, 13vw, 4.2rem); line-height:1.05; font-weight:700; letter-spacing:.03em; text-transform:uppercase; text-align:center; padding:20px 12px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:18px; background:var(--panel); word-break:break-word; }
 .slot.spin { color:var(--muted); border:1px dashed var(--yellow); }

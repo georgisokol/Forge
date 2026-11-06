@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { catInfo, fmtSet, levelLabel, totalReps } from './data.js'
 import { getHistory } from './storage.js'
 import Header from './Header.jsx'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart'
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: '2-digit' })
 
@@ -29,14 +31,16 @@ export default function History({ onBack }) {
 function Log({ history }) {
   const [open, setOpen] = useState(null)
   return (
-    <table className="table">
-      <thead><tr><th>Date</th><th>Category</th><th>Level</th></tr></thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Level</TableHead><TableHead className="w-8" /></TableRow>
+      </TableHeader>
+      <TableBody>
         {history.map((w) => (
           <Row key={w.id} w={w} open={open === w.id} toggle={() => setOpen(open === w.id ? null : w.id)} />
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
 
@@ -44,20 +48,23 @@ function Row({ w, open, toggle }) {
   const c = catInfo(w)
   return (
     <>
-      <tr className="click" onClick={toggle}>
-        <td>{fmtDate(w.date)}</td>
-        <td><Badge style={{ '--c': c.color }}>{c.label}</Badge></td>
-        <td>{levelLabel(w)}</td>
-      </tr>
+      <TableRow className="cursor-pointer" data-state={open ? 'open' : 'closed'} onClick={toggle}>
+        <TableCell className="whitespace-nowrap">{fmtDate(w.date)}</TableCell>
+        <TableCell><Badge style={{ '--c': c.color }}>{c.label}</Badge></TableCell>
+        <TableCell>{levelLabel(w)}</TableCell>
+        <TableCell className="px-2 text-[var(--muted)]">{open ? '▾' : '▸'}</TableCell>
+      </TableRow>
       {open && (
-        <tr><td colSpan="3">
-          {w.sets.map((s, i) => (
-            <div key={i} className="detail">
-              <span>{i + 1}. {s.exercise}</span>
-              <span className={s.status}>{fmtSet(s)} · {s.status === 'done' ? 'Banked' : 'Failed'}</span>
-            </div>
-          ))}
-        </td></tr>
+        <TableRow className="bg-[var(--bg)]/40">
+          <TableCell colSpan={4} className="py-2">
+            {w.sets.map((x, i) => (
+              <div key={i} className="flex justify-between gap-2.5 py-2 text-sm">
+                <span>{i + 1}. {x.exercise}</span>
+                <span className={x.status}>{fmtSet(x)} · {x.status === 'done' ? 'Banked' : 'Failed'}</span>
+              </div>
+            ))}
+          </TableCell>
+        </TableRow>
       )}
     </>
   )
@@ -79,6 +86,7 @@ function Graph({ history }) {
     chrono.forEach((w) => map.has(w.category) || map.set(w.category, catInfo(w)))
     return [...map.entries()]
   }, [chrono])
+  const chartConfig = Object.fromEntries(cats.map(([k, info]) => [k, { label: info.label, color: info.color }]))
   const data = chrono.map((w) => ({
     date: fmtDate(w.date),
     [`${w.category}_reps`]: totalReps(w.sets),
@@ -89,19 +97,19 @@ function Graph({ history }) {
     <>
       <div style={{ flex: 1, minHeight: 320, position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ left: -10, right: -10, top: 8 }}>
-              <CartesianGrid stroke="#2f343c" />
-              <XAxis dataKey="date" stroke="#8d939d" fontSize={11} />
-              <YAxis yAxisId="l" stroke="#8d939d" fontSize={11} allowDecimals={false} />
-              <YAxis yAxisId="r" orientation="right" stroke="#8d939d" fontSize={11} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: '#1a1d23', border: '1px solid #2f343c' }} />
+          <ChartContainer config={chartConfig}>
+            <LineChart data={data} margin={{ left: 0, right: 0, top: 8 }}>
+              <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+              <YAxis yAxisId="l" tickLine={false} axisLine={false} width={40} fontSize={11} allowDecimals={false} />
+              <YAxis yAxisId="r" orientation="right" tickLine={false} axisLine={false} width={40} fontSize={11} allowDecimals={false} />
+              <ChartTooltip />
               {cats.flatMap(([k, info]) => [
                 <Line key={`${k}r`} yAxisId="l" type="monotone" connectNulls dataKey={`${k}_reps`} name={`${info.label} reps`} stroke={info.color} strokeWidth={2} dot={(p) => <Marker key={p.index} {...p} levelKey={`${k}_lvl`} color={info.color} />} />,
                 <Line key={`${k}s`} yAxisId="r" type="monotone" connectNulls dataKey={`${k}_sets`} name={`${info.label} sets`} stroke={info.color} strokeDasharray="5 4" strokeWidth={1.5} dot={false} />,
               ])}
             </LineChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </div>
       <Card className="legend">
