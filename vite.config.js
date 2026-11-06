@@ -8,14 +8,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
+      workbox: { globPatterns: ['**/*.{js,css,html,png,woff2,woff}'], skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       includeAssets: ['icon-180.png'],
       manifest: {
         name: 'Forge',
         short_name: 'Forge',
         description: 'Calisthenics workout shuffler',
-        theme_color: '#0f0b08',
-        background_color: '#0f0b08',
+        theme_color: '#0e1013',
+        background_color: '#0e1013',
         display: 'standalone',
         start_url: '/Forge/',
         scope: '/Forge/',

@@ -86,11 +86,11 @@ function Graph({ history }) {
         <div style={{ position: 'absolute', inset: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ left: -10, right: -10, top: 8 }}>
-              <CartesianGrid stroke="#2e251e" />
-              <XAxis dataKey="date" stroke="#9a8a7c" fontSize={11} />
-              <YAxis yAxisId="l" stroke="#9a8a7c" fontSize={11} allowDecimals={false} />
-              <YAxis yAxisId="r" orientation="right" stroke="#9a8a7c" fontSize={11} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: '#1b1511', border: '1px solid #2e251e' }} />
+              <CartesianGrid stroke="#2f343c" />
+              <XAxis dataKey="date" stroke="#8d939d" fontSize={11} />
+              <YAxis yAxisId="l" stroke="#8d939d" fontSize={11} allowDecimals={false} />
+              <YAxis yAxisId="r" orientation="right" stroke="#8d939d" fontSize={11} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: '#1a1d23', border: '1px solid #2f343c' }} />
               {cats.flatMap(([k, info]) => [
                 <Line key={`${k}r`} yAxisId="l" type="monotone" connectNulls dataKey={`${k}_reps`} name={`${info.label} reps`} stroke={info.color} strokeWidth={2} dot={(p) => <Marker key={p.index} {...p} levelKey={`${k}_lvl`} color={info.color} />} />,
                 <Line key={`${k}s`} yAxisId="r" type="monotone" connectNulls dataKey={`${k}_sets`} name={`${info.label} sets`} stroke={info.color} strokeDasharray="5 4" strokeWidth={1.5} dot={false} />,

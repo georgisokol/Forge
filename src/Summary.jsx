@@ -16,15 +16,15 @@ export default function Summary({ workout, onSave, onDiscard }) {
       <Header title="Summary" />
       <div><span className="badge" style={{ '--c': c.color }}>{c.label}</span> <span className="muted">· {levelLabel(workout)}</span></div>
       <div className="stats">
-        <div className="card stat"><b>{sets.length}</b>sets</div>
-        <div className="card stat"><b>{totalReps(sets)}</b>reps</div>
-        <div className="card stat"><b>{fmtDuration(duration)}</b>time</div>
+        <div className="card stat"><b>{sets.length}</b>Sets</div>
+        <div className="card stat"><b>{totalReps(sets)}</b>Reps</div>
+        <div className="card stat"><b>{fmtDuration(duration)}</b>Time</div>
       </div>
       {tonnage > 0 && <div className="muted">Total weight lifted: {Math.round(tonnage)} kg</div>}
       {held > 0 && <div className="muted">Plus {held}s of holds</div>}
 
       <div className="card">
-        <h2 style={{ fontSize: '1rem', marginBottom: 8 }}>Muscles hit</h2>
+        <h2 className="label">Muscles hit</h2>
         {muscles.map(([name, n]) => (
           <div className="mbar" key={name}>
             <span className="name">{name}</span>
@@ -35,7 +35,7 @@ export default function Summary({ workout, onSave, onDiscard }) {
       </div>
 
       <div className="card">
-        <h2 style={{ fontSize: '1rem', marginBottom: 8 }}>Sets</h2>
+        <h2 className="label">Sets</h2>
         {sets.map((s, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
             <span>{i + 1}. {s.exercise}</span>

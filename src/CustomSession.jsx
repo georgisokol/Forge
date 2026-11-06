@@ -48,7 +48,7 @@ export default function CustomSession({ workout, onFinish }) {
   if (!startedAt) {
     return (
       <div className="screen">
-        <div className="topbar"><div className="muted">{plan.length} sets</div><div className="timer">00:00</div></div>
+        <div className="topbar"><div className="setno">{plan.length} <span className="muted">sets</span></div><div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="pill">Ready</span><span className="timer">00:00</span></div></div>
         <div className="slot">{workout.name}</div>
         <div className="card">
           {workout.exercises.map((x) => (
@@ -65,8 +65,8 @@ export default function CustomSession({ workout, onFinish }) {
   return (
     <div className="screen">
       <div className="topbar">
-        <div className="muted">Set {idx + 1} / {plan.length}</div>
-        <div className="timer">{fmt(elapsed)}</div>
+        <div className="setno">Set <b>{String(idx + 1).padStart(2, '0')}</b> <span className="muted">/ {plan.length}</span></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="pill">Live</span><span className="timer">{fmt(elapsed)}</span></div>
       </div>
       <div className="slot">{ex.name}</div>
       <div className="target">Set {n} of {ex.sets}</div>

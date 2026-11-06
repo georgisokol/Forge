@@ -76,7 +76,7 @@ function Builder({ draft, onCancel, onSave }) {
   if (picker) {
     const groups = [
       ...Object.entries(EXERCISES).map(([k, list]) => [CATEGORIES[k].label, CATEGORIES[k].color, list]),
-      ...(library.length ? [['My exercises', '#ff7a1a', library]] : []),
+      ...(library.length ? [['My exercises', '#f2b705', library]] : []),
     ]
     return (
       <div className="screen">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CATEGORIES, categoryForSet, candidatePool, pickExercise, rollTarget, totalSeconds } from './data.js'
 
 const MAX_SKIPS = 2
+const PHASE_LABEL = { pre: 'Ready', idle: 'Shuffle', spinning: 'Spinning', landed: 'Live', failing: 'Failed' }
 const fmt = (s) => {
   const abs = Math.abs(s)
   return `${s < 0 ? '+' : ''}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
@@ -113,8 +114,11 @@ export default function Session({ category, level, totalSets, onFinish }) {
   return (
     <div className="screen">
       <div className="topbar">
-        <div className="muted">Set {setIndex + 1} / {totalSets}</div>
-        <div className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</div>
+        <div className="setno">Set <b>{String(setIndex + 1).padStart(2, '0')}</b> <span className="muted">/ {totalSets}</span></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span className="pill">{PHASE_LABEL[phase]}</span>
+          <span className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</span>
+        </div>
       </div>
       {category === 'combo' && <div><span className="badge" style={{ '--c': cat.color }}>{cat.label}</span></div>}
 
