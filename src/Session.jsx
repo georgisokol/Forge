@@ -18,6 +18,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
   const [display, setDisplay] = useState('Ready?')
   const [current, setCurrent] = useState(null)
   const [skips, setSkips] = useState(0)
+  const [gambled, setGambled] = useState(false)
   const [skipped, setSkipped] = useState([])
   const [failValue, setFailValue] = useState('')
   const [holdLeft, setHoldLeft] = useState(0)
@@ -61,6 +62,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
     setCurrent({ ...ex, planned, category: categoryForSet(category, setIndex) })
     setHoldLeft(ex.timed ? planned : 0)
     setHoldRunning(false)
+    setGambled(false)
     setDisplay(ex.name)
     setPhase('landed')
   }
@@ -90,6 +92,13 @@ export default function Session({ category, level, totalSets, onFinish }) {
     setCurrent(null)
     setDisplay('Ready?')
     setPhase('idle')
+  }
+
+  const gamble = () => {
+    const planned = Math.max(1, Math.round(current.planned * (Math.random() < 0.5 ? 0.7 : 1.4)))
+    setCurrent({ ...current, planned })
+    if (current.timed) { setHoldLeft(planned); setHoldRunning(false) }
+    setGambled(true)
   }
 
   const finish = (sets) => onFinish(sets, startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0)
@@ -152,6 +161,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
             <button className="btn fail" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</button>
             <button className="btn skip" disabled={skips >= MAX_SKIPS} onClick={skip}>Skip ({MAX_SKIPS - skips})</button>
           </div>
+          <button className="btn skip" disabled={gambled || holdRunning} onClick={gamble}>Gamble</button>
         </>
       )}
       {phase === 'failing' && (
