@@ -128,7 +128,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
       <div className="topbar">
         <div className="setno">Set <b>{String(setIndex + 1).padStart(2, '0')}</b> <span className="muted">/ {totalSets}</span></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span className="pill">{PHASE_LABEL[phase]}</span>
+          <Badge variant="outline">{PHASE_LABEL[phase]}</Badge>
           <span className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</span>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
             <Button variant="destructive" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</Button>
             <Button variant="muted" disabled={skips >= MAX_SKIPS} onClick={skip}>Skip ({MAX_SKIPS - skips})</Button>
           </div>
-          <Button variant="muted" disabled={gambled || holdRunning} onClick={gamble}>Gamble</Button>
+          <Button variant="outline" size="sm" className="self-center" disabled={gambled || holdRunning} onClick={gamble}>🎲 Gamble</Button>
         </>
       )}
       {phase === 'failing' && (

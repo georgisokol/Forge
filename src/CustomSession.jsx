@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -50,7 +51,7 @@ export default function CustomSession({ workout, onFinish }) {
   if (!startedAt) {
     return (
       <div className="screen">
-        <div className="topbar"><div className="setno">{plan.length} <span className="muted">sets</span></div><div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="pill">Ready</span><span className="timer">00:00</span></div></div>
+        <div className="topbar"><div className="setno">{plan.length} <span className="muted">sets</span></div><div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Badge variant="outline">Ready</Badge><span className="timer">00:00</span></div></div>
         <div className="slot">{workout.name}</div>
         <div className="card">
           {workout.exercises.map((x) => (
@@ -68,7 +69,7 @@ export default function CustomSession({ workout, onFinish }) {
     <div className="screen">
       <div className="topbar">
         <div className="setno">Set <b>{String(idx + 1).padStart(2, '0')}</b> <span className="muted">/ {plan.length}</span></div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span className="pill">Live</span><span className="timer">{fmt(elapsed)}</span></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Badge variant="outline">Live</Badge><span className="timer">{fmt(elapsed)}</span></div>
       </div>
       <div className="slot">{ex.name}</div>
       <div className="target">Set {n} of {ex.sets}</div>

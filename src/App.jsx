@@ -8,6 +8,7 @@ import Header from './Header.jsx'
 import Create from './Create.jsx'
 import CustomSession from './CustomSession.jsx'
 import { Button } from '@/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 
 const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
@@ -46,14 +47,14 @@ export default function App() {
     <div className="screen">
       <Header title="Choose category" onBack={() => setScreen('home')} />
       {Object.entries(CATEGORIES).map(([key, c]) => (
-        <button key={key} className="btn ghost cat" style={{ '--c': c.color }} onClick={() => { setCategory(key); setScreen('level') }}>
+        <Button key={key} variant="secondary" className="cat" style={{ '--c': c.color }} onClick={() => { setCategory(key); setScreen('level') }}>
           {c.label}{c.sub && <div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>{c.sub}</div>}
-        </button>
+        </Button>
       ))}
       {getCustomWorkouts().map((w) => (
-        <button key={w.id} className="btn ghost cat" style={{ '--c': w.color }} onClick={() => { setCustom(w); setScreen('customSession') }}>
+        <Button key={w.id} variant="secondary" className="cat" style={{ '--c': w.color }} onClick={() => { setCustom(w); setScreen('customSession') }}>
           {w.name}<div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>custom · {w.exercises.length} exercises</div>
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -61,9 +62,9 @@ export default function App() {
     <div className="screen">
       <Header title="Choose level" onBack={() => setScreen('category')} />
       {Object.entries(LEVELS).map(([key, l]) => (
-        <button key={key} className="btn ghost" onClick={() => { setLevel(key); setSets(Math.round((l.sets[0] + l.sets[1]) / 2)); setScreen('sets') }}>
+        <Button key={key} variant="secondary" onClick={() => { setLevel(key); setSets(Math.round((l.sets[0] + l.sets[1]) / 2)); setScreen('sets') }}>
           {l.label}<div className="muted" style={{ fontSize: '.8rem', fontWeight: 400 }}>{l.sets[0]}–{l.sets[1]} sets</div>
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -71,11 +72,11 @@ export default function App() {
     <div className="screen">
       <Header title="How many sets?" onBack={() => setScreen('level')} />
       <p className="muted" style={{ margin: 0 }}>{LEVELS[level].label}: {LEVELS[level].sets[0]}–{LEVELS[level].sets[1]} sets</p>
-      <div className="chips">
+      <ToggleGroup type="single" value={String(sets)} onValueChange={(v) => v && setSets(Number(v))} className="grid grid-cols-3 gap-3">
         {setOptions(LEVELS[level].sets).map((n) => (
-          <button key={n} className={`chip ${sets === n ? 'active' : ''}`} onClick={() => setSets(n)}>{n}</button>
+          <ToggleGroupItem key={n} value={String(n)}>{n}</ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
       <div style={{ flex: 1 }} />
       <Button onClick={() => setScreen('session')}>Continue · {sets} sets</Button>
     </div>

@@ -1,6 +1,9 @@
 import { catInfo, fmtSet, isTimed, levelLabel, muscleCounts, totalReps, totalTonnage } from './data.js'
 import Header from './Header.jsx'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Card } from '@/components/ui/card'
+import { Confirm } from '@/components/ui/confirm'
 import { Badge } from '@/components/ui/badge'
 
 const fmtDuration = (s) => `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
@@ -18,25 +21,25 @@ export default function Summary({ workout, onSave, onDiscard }) {
       <Header title="Summary" />
       <div><Badge style={{ '--c': c.color }}>{c.label}</Badge> <span className="muted">· {levelLabel(workout)}</span></div>
       <div className="stats">
-        <div className="card stat"><b>{sets.length}</b>Sets</div>
-        <div className="card stat"><b>{totalReps(sets)}</b>Reps</div>
-        <div className="card stat"><b>{fmtDuration(duration)}</b>Time</div>
+        <Card className="stat"><b>{sets.length}</b>Sets</Card>
+        <Card className="stat"><b>{totalReps(sets)}</b>Reps</Card>
+        <Card className="stat"><b>{fmtDuration(duration)}</b>Time</Card>
       </div>
       {tonnage > 0 && <div className="muted">Total weight lifted: {Math.round(tonnage)} kg</div>}
       {held > 0 && <div className="muted">Plus {held}s of holds</div>}
 
-      <div className="card">
+      <Card>
         <h2 className="label">Muscles hit</h2>
         {muscles.map(([name, n]) => (
           <div className="mbar" key={name}>
             <span className="name">{name}</span>
-            <div className="fill" style={{ width: `${(n / max) * 100}%`, minWidth: 8 }} />
+            <Progress value={(n / max) * 100} />
             <span className="muted">{n}</span>
           </div>
         ))}
-      </div>
+      </Card>
 
-      <div className="card">
+      <Card>
         <h2 className="label">Sets</h2>
         {sets.map((s, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
@@ -44,11 +47,11 @@ export default function Summary({ workout, onSave, onDiscard }) {
             <span className={s.status}>{fmtSet(s)}</span>
           </div>
         ))}
-      </div>
+      </Card>
 
       <div style={{ flex: 1 }} />
       <Button variant="bank" size="lg" onClick={onSave}>Save Workout</Button>
-      <Button variant="muted" onClick={() => window.confirm('Discard this workout?') && onDiscard()}>Discard</Button>
+      <Confirm title="Discard this workout?" confirmLabel="Discard" onConfirm={onDiscard} trigger={<Button variant="muted">Discard</Button>} />
     </div>
   )
 }

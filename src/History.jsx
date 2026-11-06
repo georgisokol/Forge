@@ -3,6 +3,8 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { catInfo, fmtSet, levelLabel, totalReps } from './data.js'
 import { getHistory } from './storage.js'
 import Header from './Header.jsx'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: '2-digit' })
@@ -13,10 +15,12 @@ export default function History({ onBack }) {
   return (
     <div className="screen">
       <Header title="History" onBack={onBack} />
-      <div className="tabs">
-        <button className={`tab ${tab === 'log' ? 'active' : ''}`} onClick={() => setTab('log')}>Log</button>
-        <button className={`tab ${tab === 'graph' ? 'active' : ''}`} onClick={() => setTab('graph')}>Progress</button>
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="log">Log</TabsTrigger>
+          <TabsTrigger value="graph">Progress</TabsTrigger>
+        </TabsList>
+      </Tabs>
       {history.length === 0 ? <p className="muted">No workouts yet.</p> : tab === 'log' ? <Log history={history} /> : <Graph history={history} />}
     </div>
   )
@@ -100,13 +104,13 @@ function Graph({ history }) {
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="card legend">
+      <Card className="legend">
         <div className="legend-row">
           {cats.map(([k, info]) => <span key={k}><i style={{ background: info.color }} />{info.label}</span>)}
         </div>
         <div className="legend-row"><span>● Beginner</span><span>■ Intermediate</span><span>◆ Elite / Custom</span></div>
         <div className="legend-row"><span>━ Total reps (left axis)</span><span>┅ Sets (right axis)</span></div>
-      </div>
+      </Card>
     </>
   )
 }

@@ -3,6 +3,9 @@ import { CATEGORIES, EXERCISES, MUSCLES } from './data.js'
 import { getCustomExercises, getCustomWorkouts, saveCustomExercises, saveCustomWorkouts } from './storage.js'
 import Header from './Header.jsx'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Confirm } from '@/components/ui/confirm'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 
@@ -27,16 +30,16 @@ export default function Create({ onBack }) {
       <Button onClick={() => setDraft({ id: uid(), name: '', color: COLORS[workouts.length % COLORS.length], exercises: [] })}>+ New workout</Button>
       {workouts.length === 0 && <p className="muted">Your workouts appear in Start Workout next to the built-in categories.</p>}
       {workouts.map((w) => (
-        <div key={w.id} className="card cat" style={{ '--c': w.color }}>
+        <Card key={w.id} className="cat" style={{ '--c': w.color }}>
           <div style={{ fontWeight: 800, fontSize: '1.2rem' }}>{w.name}</div>
           <div className="muted" style={{ fontSize: '.85rem', margin: '4px 0 12px' }}>
             {w.exercises.length} exercises · {w.exercises.reduce((a, e) => a + e.sets, 0)} sets
           </div>
           <div className="row">
             <Button variant="secondary" size="sm" onClick={() => setDraft(w)}>Edit</Button>
-            <Button variant="muted" size="sm" onClick={() => window.confirm(`Delete "${w.name}"?`) && persist(workouts.filter((x) => x.id !== w.id))}>Delete</Button>
+            <Confirm title={`Delete "${w.name}"?`} confirmLabel="Delete" onConfirm={() => persist(workouts.filter((x) => x.id !== w.id))} trigger={<Button variant="muted" size="sm">Delete</Button>} />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   )
@@ -106,41 +109,41 @@ function Builder({ draft, onCancel, onSave }) {
       <Input placeholder="Workout name (e.g. Chest Day)" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
 
       {exercises.map((x, i) => (
-        <div key={x.key} className="card">
+        <Card key={x.key}>
           <div className="exhead">
             <b>{x.name}</b>
             <div>
-              <button className="iconbtn" onClick={() => move(i, -1)} aria-label="Move up">↑</button>
-              <button className="iconbtn" onClick={() => move(i, 1)} aria-label="Move down">↓</button>
-              <button className="iconbtn" onClick={() => setExercises((l) => l.filter((y) => y.key !== x.key))} aria-label="Remove">✕</button>
+              <Button size="icon" onClick={() => move(i, -1)} aria-label="Move up">↑</Button>
+              <Button size="icon" onClick={() => move(i, 1)} aria-label="Move down">↓</Button>
+              <Button size="icon" onClick={() => setExercises((l) => l.filter((y) => y.key !== x.key))} aria-label="Remove">✕</Button>
             </div>
           </div>
           <div className="exhead" style={{ marginTop: 10 }}>
             <div className="stepper">
-              <button className="iconbtn" onClick={() => patch(x.key, { sets: Math.max(1, x.sets - 1) })}>−</button>
+              <Button size="icon" onClick={() => patch(x.key, { sets: Math.max(1, x.sets - 1) })}>−</Button>
               <span>{x.sets} sets</span>
-              <button className="iconbtn" onClick={() => patch(x.key, { sets: Math.min(20, x.sets + 1) })}>+</button>
+              <Button size="icon" onClick={() => patch(x.key, { sets: Math.min(20, x.sets + 1) })}>+</Button>
             </div>
             {!x.timed && (
               <label className="muted"><input type="checkbox" checked={x.weighted} onChange={(e) => patch(x.key, { weighted: e.target.checked })} /> Weight</label>
             )}
           </div>
-        </div>
+        </Card>
       ))}
 
       <Button variant="secondary" onClick={() => setPicker(true)}>+ Add from library</Button>
 
-      <div className="card">
+      <Card>
         <b>New exercise</b>
         <Input style={{ margin: '10px 0' }} placeholder="Name (e.g. Bench Press)" value={newName} maxLength={30} onChange={(e) => setNewName(e.target.value)} />
         <label className="muted"><input type="checkbox" checked={newWeighted} onChange={(e) => setNewWeighted(e.target.checked)} /> Track weight (kg)</label>
-        <div className="mchips">
+        <ToggleGroup type="multiple" value={newMuscles} onValueChange={setNewMuscles} className="mt-3 flex flex-wrap gap-2">
           {MUSCLES.map((m) => (
-            <button key={m} className={`mchip ${newMuscles.includes(m) ? 'active' : ''}`} onClick={() => setNewMuscles((l) => (l.includes(m) ? l.filter((y) => y !== m) : [...l, m]))}>{m}</button>
+            <ToggleGroupItem key={m} value={m} size="sm">{m}</ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
         <Button variant="secondary" style={{ marginTop: 12 }} disabled={!newName.trim()} onClick={addNew}>Add to workout</Button>
-      </div>
+      </Card>
 
       <Button variant="bank" size="lg" disabled={!name.trim() || exercises.length === 0} onClick={() => onSave({ ...draft, name: name.trim(), exercises })}>Save workout</Button>
     </div>

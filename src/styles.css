@@ -30,14 +30,7 @@ h1 { font-size:2.6rem; line-height:1.05; }
 .topbar { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--line); }
 .setno { font-family:var(--display); font-size:1.5rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
 .setno b { color:var(--yellow); font-weight:700; }
-.pill { border:1px solid var(--line); border-radius:99px; padding:6px 14px; font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
 
-.tabs { display:flex; gap:8px; }
-.tab { flex:1; padding:13px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-family:var(--display); font-size:1.05rem; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
-.tab.active { color:var(--yellow); border-color:var(--yellow); background:var(--yellow-dim); }
-.chips { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
-.chip { padding:22px 0; border-radius:14px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); font-size:1.7rem; font-weight:700; cursor:pointer; }
-.chip.active { border:1.5px solid var(--yellow); background:var(--yellow-dim); color:var(--yellow); }
 
 .table { width:100%; border-collapse:collapse; }
 .table td, .table th { padding:20px 8px; border-bottom:1px solid var(--line); text-align:left; font-size:1.05rem; }
@@ -62,14 +55,9 @@ h1 { font-size:2.6rem; line-height:1.05; }
 .stat b { display:block; font-family:var(--display); font-size:2rem; letter-spacing:.02em; color:var(--yellow); }
 .mbar { display:flex; align-items:center; gap:10px; margin:8px 0; }
 .mbar .name { width:96px; font-size:.8rem; letter-spacing:.05em; }
-.mbar .fill { height:12px; border-radius:6px; background:var(--yellow); }
 .card h2.label { font-family:var(--mono); font-weight:400; font-size:.75rem; letter-spacing:.2em; color:var(--muted); margin-bottom:8px; }
 
 .pick { width:100%; display:flex; justify-content:space-between; padding:14px 4px; background:none; border:0; border-bottom:1px solid var(--line); color:var(--text); font-size:1rem; cursor:pointer; text-align:left; }
 .exhead { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.iconbtn { width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--panel2); color:var(--text); font-size:1.1rem; cursor:pointer; margin-left:4px; }
 .stepper { display:flex; align-items:center; gap:10px; }
-.mchips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.mchip { padding:7px 12px; border-radius:99px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); cursor:pointer; font-size:.8rem; }
-.mchip.active { border-color:var(--yellow); color:var(--yellow); background:var(--yellow-dim); }
 input[type=checkbox] { accent-color:var(--yellow); }
