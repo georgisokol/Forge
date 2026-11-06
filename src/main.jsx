@@ -6,6 +6,7 @@ import '@fontsource/oswald/600.css'
 import '@fontsource/oswald/700.css'
 import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/700.css'
+import './tailwind.css'
 import './styles.css'
 
 createRoot(document.getElementById('root')).render(<App />)

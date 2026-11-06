@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { CATEGORIES, categoryForSet, candidatePool, pickExercise, rollTarget, totalSeconds } from './data.js'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 
 const MAX_SKIPS = 2
 const PHASE_LABEL = { pre: 'Ready', idle: 'Shuffle', spinning: 'Spinning', landed: 'Live', failing: 'Failed' }
@@ -49,8 +52,8 @@ export default function Session({ category, level, totalSets, onFinish }) {
 
   const pool = () => candidatePool({ category, level, setIndex, totalSets, prevTier: logged.at(-1)?.tier })
 
-  const startSpin = () => {
-    const names = pool().map((x) => x.name)
+  const startSpin = (candidates = pool()) => {
+    const names = candidates.map((x) => x.name)
     clearInterval(spinTimer.current)
     spinTimer.current = setInterval(() => setDisplay(names[Math.floor(Math.random() * names.length)]), 70)
   }
@@ -90,8 +93,8 @@ export default function Session({ category, level, totalSets, onFinish }) {
     setSkips(0)
     setSkipped([])
     setCurrent(null)
-    setDisplay('Ready?')
-    setPhase('idle')
+    setPhase('spinning')
+    startSpin(candidatePool({ category, level, setIndex: setIndex + 1, totalSets, prevTier: entry.tier }))
   }
 
   const gamble = () => {
@@ -129,7 +132,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
           <span className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</span>
         </div>
       </div>
-      {category === 'combo' && <div><span className="badge" style={{ '--c': cat.color }}>{cat.label}</span></div>}
+      {category === 'combo' && <div><Badge style={{ '--c': cat.color }}>{cat.label}</Badge></div>}
 
       <div className={`slot ${phase === 'spinning' ? 'spin' : ''}`}>{display}</div>
 
@@ -139,7 +142,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
             <div className="target">Hold {current.planned} sec</div>
             <div className="time">{fmt(Math.max(holdLeft, 0))}</div>
             {phase === 'landed' && !holdDone && (
-              <button className="btn finish" onClick={() => setHoldRunning(!holdRunning)}>{holdRunning ? 'Pause' : holdLeft < current.planned ? 'Resume' : 'Start Timer'}</button>
+              <Button variant="outline" onClick={() => setHoldRunning(!holdRunning)}>{holdRunning ? 'Pause' : holdLeft < current.planned ? 'Resume' : 'Start Timer'}</Button>
             )}
           </div>
         ) : (
@@ -147,34 +150,34 @@ export default function Session({ category, level, totalSets, onFinish }) {
         )
       )}
 
-      {phase === 'pre' && <button className="btn" onClick={beginSession}>Start Session</button>}
-      {phase === 'idle' && <button className="btn" onClick={spin}>Shuffle</button>}
+      {phase === 'pre' && <Button onClick={beginSession}>Start Session</Button>}
+      {phase === 'idle' && <Button onClick={spin}>Shuffle</Button>}
       {phase === 'spinning' && (skips === 0
-        ? <button className="btn" onClick={() => land([])}>Stop</button>
-        : <button className="btn" disabled>Shuffling…</button>)}
+        ? <Button onClick={() => land([])}>Stop</Button>
+        : <Button disabled>Shuffling…</Button>)}
       {phase === 'landed' && (
         <>
-          <button className="btn bank" disabled={timed && !holdDone} onClick={() => finishSet(current.planned, 'done')}>
+          <Button variant="bank" size="lg" disabled={timed && !holdDone} onClick={() => finishSet(current.planned, 'done')}>
             {isLast ? 'Bank & Finish Workout' : 'Bank'}
-          </button>
+          </Button>
           <div className="row">
-            <button className="btn fail" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</button>
-            <button className="btn skip" disabled={skips >= MAX_SKIPS} onClick={skip}>Skip ({MAX_SKIPS - skips})</button>
+            <Button variant="destructive" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</Button>
+            <Button variant="muted" disabled={skips >= MAX_SKIPS} onClick={skip}>Skip ({MAX_SKIPS - skips})</Button>
           </div>
-          <button className="btn skip" disabled={gambled || holdRunning} onClick={gamble}>Gamble</button>
+          <Button variant="muted" disabled={gambled || holdRunning} onClick={gamble}>Gamble</Button>
         </>
       )}
       {phase === 'failing' && (
         <>
-          <input className="input" type="number" inputMode="numeric" min="0" autoFocus placeholder={timed ? 'Seconds you held' : 'Reps you actually did'} value={failValue} onChange={(e) => setFailValue(e.target.value)} />
+          <Input type="number" inputMode="numeric" min="0" autoFocus placeholder={timed ? 'Seconds you held' : 'Reps you actually did'} value={failValue} onChange={(e) => setFailValue(e.target.value)} />
           <div className="row">
-            <button className="btn skip" onClick={() => setPhase('landed')}>Cancel</button>
-            <button className="btn fail" disabled={failValue === ''} onClick={() => finishSet(Math.max(0, parseInt(failValue, 10) || 0), 'failed')}>Log {unit}</button>
+            <Button variant="muted" onClick={() => setPhase('landed')}>Cancel</Button>
+            <Button variant="destructive" disabled={failValue === ''} onClick={() => finishSet(Math.max(0, parseInt(failValue, 10) || 0), 'failed')}>Log {unit}</Button>
           </div>
         </>
       )}
       {phase !== 'pre' && (
-        <button className="btn finish" disabled={logged.length === 0} onClick={() => finish(logged)}>Finish Workout</button>
+        <Button variant="outline" disabled={logged.length === 0} onClick={() => finish(logged)}>Finish Workout</Button>
       )}
     </div>
   )

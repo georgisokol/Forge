@@ -3,6 +3,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { catInfo, fmtSet, levelLabel, totalReps } from './data.js'
 import { getHistory } from './storage.js'
 import Header from './Header.jsx'
+import { Badge } from '@/components/ui/badge'
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: '2-digit' })
 
@@ -41,7 +42,7 @@ function Row({ w, open, toggle }) {
     <>
       <tr className="click" onClick={toggle}>
         <td>{fmtDate(w.date)}</td>
-        <td><span className="badge" style={{ '--c': c.color }}>{c.label}</span></td>
+        <td><Badge style={{ '--c': c.color }}>{c.label}</Badge></td>
         <td>{levelLabel(w)}</td>
       </tr>
       {open && (

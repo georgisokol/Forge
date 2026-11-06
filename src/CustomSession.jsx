@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
@@ -57,7 +59,7 @@ export default function CustomSession({ workout, onFinish }) {
             </div>
           ))}
         </div>
-        <button className="btn" onClick={() => setStartedAt(Date.now())}>Start Session</button>
+        <Button onClick={() => setStartedAt(Date.now())}>Start Session</Button>
       </div>
     )
   }
@@ -73,20 +75,20 @@ export default function CustomSession({ workout, onFinish }) {
       <div className="row">
         <div>
           <div className="muted" style={{ marginBottom: 6 }}>{ex.timed ? 'Seconds' : 'Reps'}</div>
-          <input className="input big" type="number" inputMode="numeric" min="0" value={reps} onChange={(e) => setReps(e.target.value)} />
+          <Input className="text-center font-[family-name:var(--display)] text-[2.2rem] font-bold" type="number" inputMode="numeric" min="0" value={reps} onChange={(e) => setReps(e.target.value)} />
         </div>
         {ex.weighted && !ex.timed && (
           <div>
             <div className="muted" style={{ marginBottom: 6 }}>Weight (kg)</div>
-            <input className="input big" type="number" inputMode="decimal" min="0" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
+            <Input className="text-center font-[family-name:var(--display)] text-[2.2rem] font-bold" type="number" inputMode="decimal" min="0" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
           </div>
         )}
       </div>
       <div style={{ flex: 1 }} />
-      <button className="btn bank" disabled={reps === ''} onClick={bank}>{isLast ? 'Bank & Finish Workout' : 'Bank'}</button>
+      <Button variant="bank" size="lg" disabled={reps === ''} onClick={bank}>{isLast ? 'Bank & Finish Workout' : 'Bank'}</Button>
       <div className="row">
-        <button className="btn skip" disabled={isLast} onClick={skip}>Skip set</button>
-        <button className="btn finish" disabled={logged.length === 0} onClick={() => finish(logged)}>Finish Workout</button>
+        <Button variant="muted" disabled={isLast} onClick={skip}>Skip set</Button>
+        <Button variant="outline" disabled={logged.length === 0} onClick={() => finish(logged)}>Finish Workout</Button>
       </div>
     </div>
   )

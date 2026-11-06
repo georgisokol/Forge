@@ -7,6 +7,8 @@ import History from './History.jsx'
 import Header from './Header.jsx'
 import Create from './Create.jsx'
 import CustomSession from './CustomSession.jsx'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
@@ -34,9 +36,9 @@ export default function App() {
         <p className="muted" style={{ margin: '6px 0 0' }}>Time to forge.</p>
       </div>
       <div className="split">
-        <button className="btn" onClick={() => setScreen('category')}>Start Workout</button>
-        <button className="btn ghost" onClick={() => setScreen('create')}>Create Your Own</button>
-        <button className="btn ghost" onClick={() => setScreen('history')}>History</button>
+        <Button onClick={() => setScreen('category')}>Start Workout</Button>
+        <Button variant="secondary" onClick={() => setScreen('create')}>Create Your Own</Button>
+        <Button variant="secondary" onClick={() => setScreen('history')}>History</Button>
       </div>
     </div>
   )
@@ -75,7 +77,7 @@ export default function App() {
         ))}
       </div>
       <div style={{ flex: 1 }} />
-      <button className="btn" onClick={() => setScreen('session')}>Continue · {sets} sets</button>
+      <Button onClick={() => setScreen('session')}>Continue · {sets} sets</Button>
     </div>
   )
   if (screen === 'session') return (
@@ -115,8 +117,8 @@ function Nickname({ onSave }) {
     <div className="screen center">
       <div className="logo">Forge</div>
       <p className="muted">What should we call you?</p>
-      <input className="input" autoFocus placeholder="Nickname" value={name} maxLength={24} onChange={(e) => setName(e.target.value)} />
-      <button className="btn" disabled={!name.trim()} onClick={() => onSave(name.trim())}>Continue</button>
+      <Input autoFocus placeholder="Nickname" value={name} maxLength={24} onChange={(e) => setName(e.target.value)} />
+      <Button disabled={!name.trim()} onClick={() => onSave(name.trim())}>Continue</Button>
     </div>
   )
 }

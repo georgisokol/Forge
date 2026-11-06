@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { CATEGORIES, EXERCISES, MUSCLES } from './data.js'
 import { getCustomExercises, getCustomWorkouts, saveCustomExercises, saveCustomWorkouts } from './storage.js'
 import Header from './Header.jsx'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 
 const COLORS = ['#f43f5e', '#14b8a6', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6']
 const uid = () => `${Date.now()}${Math.floor(Math.random() * 1000)}`
@@ -21,7 +24,7 @@ export default function Create({ onBack }) {
   return (
     <div className="screen">
       <Header title="Create your own" onBack={onBack} />
-      <button className="btn" onClick={() => setDraft({ id: uid(), name: '', color: COLORS[workouts.length % COLORS.length], exercises: [] })}>+ New workout</button>
+      <Button onClick={() => setDraft({ id: uid(), name: '', color: COLORS[workouts.length % COLORS.length], exercises: [] })}>+ New workout</Button>
       {workouts.length === 0 && <p className="muted">Your workouts appear in Start Workout next to the built-in categories.</p>}
       {workouts.map((w) => (
         <div key={w.id} className="card cat" style={{ '--c': w.color }}>
@@ -30,8 +33,8 @@ export default function Create({ onBack }) {
             {w.exercises.length} exercises · {w.exercises.reduce((a, e) => a + e.sets, 0)} sets
           </div>
           <div className="row">
-            <button className="btn ghost small" onClick={() => setDraft(w)}>Edit</button>
-            <button className="btn skip small" onClick={() => window.confirm(`Delete "${w.name}"?`) && persist(workouts.filter((x) => x.id !== w.id))}>Delete</button>
+            <Button variant="secondary" size="sm" onClick={() => setDraft(w)}>Edit</Button>
+            <Button variant="muted" size="sm" onClick={() => window.confirm(`Delete "${w.name}"?`) && persist(workouts.filter((x) => x.id !== w.id))}>Delete</Button>
           </div>
         </div>
       ))}
@@ -83,7 +86,7 @@ function Builder({ draft, onCancel, onSave }) {
         <Header title="Add exercises" onBack={() => setPicker(false)} />
         {groups.map(([label, color, list]) => (
           <div key={label}>
-            <div className="badge" style={{ '--c': color, marginBottom: 8 }}>{label}</div>
+            <Badge style={{ '--c': color, marginBottom: 8 }}>{label}</Badge>
             {list.map((ex) => (
               <button key={ex.name} className="pick" onClick={() => add(ex)}>
                 <span>{ex.name}</span>
@@ -92,7 +95,7 @@ function Builder({ draft, onCancel, onSave }) {
             ))}
           </div>
         ))}
-        <button className="btn" onClick={() => setPicker(false)}>Done</button>
+        <Button onClick={() => setPicker(false)}>Done</Button>
       </div>
     )
   }
@@ -100,7 +103,7 @@ function Builder({ draft, onCancel, onSave }) {
   return (
     <div className="screen">
       <Header title={draft.name ? 'Edit workout' : 'New workout'} onBack={onCancel} />
-      <input className="input" placeholder="Workout name (e.g. Chest Day)" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
+      <Input placeholder="Workout name (e.g. Chest Day)" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
 
       {exercises.map((x, i) => (
         <div key={x.key} className="card">
@@ -125,21 +128,21 @@ function Builder({ draft, onCancel, onSave }) {
         </div>
       ))}
 
-      <button className="btn ghost" onClick={() => setPicker(true)}>+ Add from library</button>
+      <Button variant="secondary" onClick={() => setPicker(true)}>+ Add from library</Button>
 
       <div className="card">
         <b>New exercise</b>
-        <input className="input" style={{ margin: '10px 0' }} placeholder="Name (e.g. Bench Press)" value={newName} maxLength={30} onChange={(e) => setNewName(e.target.value)} />
+        <Input style={{ margin: '10px 0' }} placeholder="Name (e.g. Bench Press)" value={newName} maxLength={30} onChange={(e) => setNewName(e.target.value)} />
         <label className="muted"><input type="checkbox" checked={newWeighted} onChange={(e) => setNewWeighted(e.target.checked)} /> Track weight (kg)</label>
         <div className="mchips">
           {MUSCLES.map((m) => (
             <button key={m} className={`mchip ${newMuscles.includes(m) ? 'active' : ''}`} onClick={() => setNewMuscles((l) => (l.includes(m) ? l.filter((y) => y !== m) : [...l, m]))}>{m}</button>
           ))}
         </div>
-        <button className="btn ghost" style={{ marginTop: 12 }} disabled={!newName.trim()} onClick={addNew}>Add to workout</button>
+        <Button variant="secondary" style={{ marginTop: 12 }} disabled={!newName.trim()} onClick={addNew}>Add to workout</Button>
       </div>
 
-      <button className="btn bank" disabled={!name.trim() || exercises.length === 0} onClick={() => onSave({ ...draft, name: name.trim(), exercises })}>Save workout</button>
+      <Button variant="bank" size="lg" disabled={!name.trim() || exercises.length === 0} onClick={() => onSave({ ...draft, name: name.trim(), exercises })}>Save workout</Button>
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { catInfo, fmtSet, isTimed, levelLabel, muscleCounts, totalReps, totalTonnage } from './data.js'
 import Header from './Header.jsx'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 const fmtDuration = (s) => `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
 
@@ -14,7 +16,7 @@ export default function Summary({ workout, onSave, onDiscard }) {
   return (
     <div className="screen">
       <Header title="Summary" />
-      <div><span className="badge" style={{ '--c': c.color }}>{c.label}</span> <span className="muted">· {levelLabel(workout)}</span></div>
+      <div><Badge style={{ '--c': c.color }}>{c.label}</Badge> <span className="muted">· {levelLabel(workout)}</span></div>
       <div className="stats">
         <div className="card stat"><b>{sets.length}</b>Sets</div>
         <div className="card stat"><b>{totalReps(sets)}</b>Reps</div>
@@ -45,8 +47,8 @@ export default function Summary({ workout, onSave, onDiscard }) {
       </div>
 
       <div style={{ flex: 1 }} />
-      <button className="btn bank" onClick={onSave}>Save Workout</button>
-      <button className="btn skip" onClick={() => window.confirm('Discard this workout?') && onDiscard()}>Discard</button>
+      <Button variant="bank" size="lg" onClick={onSave}>Save Workout</Button>
+      <Button variant="muted" onClick={() => window.confirm('Discard this workout?') && onDiscard()}>Discard</Button>
     </div>
   )
 }

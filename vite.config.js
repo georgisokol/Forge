@@ -1,11 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'node:path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/Forge/',
+  resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: { globPatterns: ['**/*.{js,css,html,png,woff2,woff}'], skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
