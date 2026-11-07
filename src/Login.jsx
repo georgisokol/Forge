@@ -43,9 +43,9 @@ export default function Login() {
   const filled = email && password
 
   return (
-    <div className="screen center">
+    <div className="screen" style={{ alignItems: 'stretch', textAlign: 'center' }}>
       <div className="logo">Forge</div>
-      <Card className="flex w-full max-w-sm flex-col gap-3 p-5">
+      <Card className="flex flex-1 flex-col justify-center gap-3 p-5">
         <form className="flex flex-col gap-3" onSubmit={signIn}>
           <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
