@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { GoogleAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 import { auth } from './firebase.js'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
 const ERRORS = {
@@ -16,7 +17,6 @@ const errorText = (e) => ERRORS[e.code] ?? 'Something went wrong. Try again.'
 const IGNORED = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request']
 
 export default function Login() {
-  const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -29,33 +29,33 @@ export default function Login() {
     setBusy(false)
   }
 
-  const submit = (e) => {
+  const signIn = (e) => {
     e.preventDefault()
-    run(() => (mode === 'signin' ? signInWithEmailAndPassword : createUserWithEmailAndPassword)(auth, email.trim(), password))
+    run(() => signInWithEmailAndPassword(auth, email.trim(), password))
   }
+  const register = () => run(() => createUserWithEmailAndPassword(auth, email.trim(), password))
   const google = () => run(() => signInWithPopup(auth, new GoogleAuthProvider()))
   const reset = () => run(async () => {
     if (!email.trim()) return setMessage({ error: true, text: 'Enter your email first.' })
     await sendPasswordResetEmail(auth, email.trim())
     setMessage({ text: 'Password reset email sent.' })
   })
+  const filled = email && password
 
   return (
     <div className="screen center">
       <div className="logo">Forge</div>
-      <form className="split" onSubmit={submit}>
-        <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <Button type="submit" disabled={busy || !email || !password}>{mode === 'signin' ? 'Sign in' : 'Create account'}</Button>
-      </form>
-      <Button variant="secondary" disabled={busy} onClick={google}>Continue with Google</Button>
-      {message && <p className={message.error ? 'failed' : 'muted'} style={{ margin: 0 }}>{message.text}</p>}
-      <p className="muted" style={{ margin: 0 }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); setMode(mode === 'signin' ? 'register' : 'signin'); setMessage(null) }}>
-          {mode === 'signin' ? 'New here? Create an account' : 'Have an account? Sign in'}
-        </a>
-        {mode === 'signin' && <> · <a href="#" onClick={(e) => { e.preventDefault(); reset() }}>Forgot password?</a></>}
-      </p>
+      <Card className="flex w-full max-w-sm flex-col gap-3 p-5">
+        <form className="flex flex-col gap-3" onSubmit={signIn}>
+          <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Button type="submit" size="sm" className="w-full" disabled={busy || !filled}>Sign in</Button>
+        </form>
+        <Button variant="secondary" size="sm" className="w-full" disabled={busy || !filled} onClick={register}>Register</Button>
+        <Button variant="outline" size="sm" className="w-full" disabled={busy} onClick={google}>Continue with Google</Button>
+        <Button variant="muted" size="sm" className="w-full" disabled={busy} onClick={reset}>Forgot password</Button>
+        {message && <p className={message.error ? 'failed' : 'muted'} style={{ margin: 0, textAlign: 'center' }}>{message.text}</p>}
+      </Card>
     </div>
   )
 }
