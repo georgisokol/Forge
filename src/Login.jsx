@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { GoogleAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 import { auth } from './firebase.js'
 import { Button } from '@/components/ui/button'
+import Forging from './Forging.jsx'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
@@ -21,6 +22,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
+  const [signedIn, setSignedIn] = useState(false)
 
   const run = async (fn) => {
     setBusy(true)
@@ -31,16 +33,18 @@ export default function Login() {
 
   const signIn = (e) => {
     e.preventDefault()
-    run(() => signInWithEmailAndPassword(auth, email.trim(), password))
+    run(() => signInWithEmailAndPassword(auth, email.trim(), password).then(() => setSignedIn(true)))
   }
-  const register = () => run(() => createUserWithEmailAndPassword(auth, email.trim(), password))
-  const google = () => run(() => signInWithPopup(auth, new GoogleAuthProvider()))
+  const register = () => run(() => createUserWithEmailAndPassword(auth, email.trim(), password).then(() => setSignedIn(true)))
+  const google = () => run(() => signInWithPopup(auth, new GoogleAuthProvider()).then(() => setSignedIn(true)))
   const reset = () => run(async () => {
     if (!email.trim()) return setMessage({ error: true, text: 'Enter your email first.' })
     await sendPasswordResetEmail(auth, email.trim())
     setMessage({ text: 'Password reset email sent.' })
   })
   const filled = email && password
+  // Keep the loader up until the app takes over, so the form never flashes back.
+  if (signedIn) return <Forging />
 
   return (
     <div className="screen center">

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 
+const FORGING_MS = 1500
 const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
 export default function App() {
@@ -31,7 +32,7 @@ export default function App() {
   const [custom, setCustom] = useState(null)
 
   useEffect(() => {
-    const t = setTimeout(() => setSplashDone(true), 500)
+    const t = setTimeout(() => setSplashDone(true), FORGING_MS)
     return () => clearTimeout(t)
   }, [])
 
@@ -45,7 +46,7 @@ export default function App() {
     }
     setUser(undefined)
     try {
-      await loadUserData(u)
+      await Promise.all([loadUserData(u), new Promise((r) => setTimeout(r, FORGING_MS))])
       setProfile(getProfile())
       setLoadError(false)
       setUser(u)
