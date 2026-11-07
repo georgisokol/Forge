@@ -4,6 +4,8 @@ import { CATEGORIES, LEVELS } from './data.js'
 import { auth } from './firebase.js'
 import { clearUserData, getCustomWorkouts, getProfile, loadUserData, saveProfile, saveWorkout } from './storage.js'
 import Login from './Login.jsx'
+import Forging from './Forging.jsx'
+import { Confirm } from '@/components/ui/confirm'
 import Session from './Session.jsx'
 import Summary from './Summary.jsx'
 import History from './History.jsx'
@@ -41,6 +43,7 @@ export default function App() {
       setUser(null)
       return
     }
+    setUser(undefined)
     try {
       await loadUserData(u)
       setProfile(getProfile())
@@ -60,20 +63,30 @@ export default function App() {
       <Button variant="secondary" onClick={() => { setLoadError(false); signOut(auth) }}>Sign out</Button>
     </div>
   )
-  if (!splashDone || user === undefined) return <div className="screen center"><div className="logo">Forge</div></div>
+  if (!splashDone || user === undefined) return <Forging />
   if (!user) return <Login />
   if (!profile) return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); setProfile(p) }} />
   if (screen === 'home') return (
     <div className="screen">
       <div>
-        <h1>Hey, {profile.nickname}</h1>
+        <Header
+          title={`Hey, ${profile.nickname}`}
+          right={(
+            <Confirm
+              title="Sign out?"
+              description="You'll need to sign in again to see your workouts."
+              confirmLabel="Sign out"
+              onConfirm={() => signOut(auth)}
+              trigger={<Button variant="muted" size="sm" className="shrink-0">Sign out</Button>}
+            />
+          )}
+        />
         <p className="muted" style={{ margin: '6px 0 0' }}>Time to forge.</p>
       </div>
       <div className="split">
         <Button onClick={() => setScreen('category')}>Start Workout</Button>
         <Button variant="secondary" onClick={() => setScreen('create')}>Create Your Own</Button>
         <Button variant="secondary" onClick={() => setScreen('history')}>History</Button>
-        <Button variant="secondary" onClick={() => signOut(auth)}>Sign out</Button>
       </div>
     </div>
   )

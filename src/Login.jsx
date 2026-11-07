@@ -52,6 +52,9 @@ export default function Login() {
           <Button type="submit" size="sm" className="w-full" disabled={busy || !filled}>Sign in</Button>
         </form>
         <Button variant="secondary" size="sm" className="w-full" disabled={busy || !filled} onClick={register}>Register</Button>
+        <div className="my-3 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+          <span className="h-px flex-1 bg-[var(--line)]" />or<span className="h-px flex-1 bg-[var(--line)]" />
+        </div>
         <Button variant="outline" size="sm" className="w-full" disabled={busy} onClick={google}>Continue with Google</Button>
         <Button variant="muted" size="sm" className="w-full" disabled={busy} onClick={reset}>Forgot password</Button>
         {message && <p className={message.error ? 'failed' : 'muted'} style={{ margin: 0, textAlign: 'center' }}>{message.text}</p>}

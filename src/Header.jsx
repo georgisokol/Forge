@@ -1,6 +1,6 @@
-export default function Header({ title, onBack }) {
+export default function Header({ title, onBack, right }) {
   return (
-    <div className="head">
+    <div className="head" style={onBack ? undefined : { marginLeft: 0 }}>
       {onBack && (
         <button className="arrow" aria-label="Back" onClick={onBack}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -8,7 +8,8 @@ export default function Header({ title, onBack }) {
           </svg>
         </button>
       )}
-      <h2>{title}</h2>
+      <h2 style={{ flex: 1 }}>{title}</h2>
+      {right}
     </div>
   )
 }
