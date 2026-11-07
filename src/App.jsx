@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { CATEGORIES, LEVELS } from './data.js'
-import { getCustomWorkouts, getProfile, saveProfile, saveWorkout } from './storage.js'
+import { auth } from './firebase.js'
+import { clearUserData, getCustomWorkouts, getProfile, loadUserData, saveProfile, saveWorkout } from './storage.js'
+import Login from './Login.jsx'
 import Session from './Session.jsx'
 import Summary from './Summary.jsx'
 import History from './History.jsx'
@@ -14,8 +17,11 @@ import { Input } from '@/components/ui/input'
 const setOptions = ([min, max]) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
 export default function App() {
-  const [profile, setProfile] = useState(getProfile)
-  const [screen, setScreen] = useState('splash')
+  const [profile, setProfile] = useState(null)
+  const [user, setUser] = useState(undefined) // undefined while the saved session is being restored
+  const [splashDone, setSplashDone] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [screen, setScreen] = useState('home')
   const [category, setCategory] = useState(null)
   const [level, setLevel] = useState(null)
   const [sets, setSets] = useState(10)
@@ -23,13 +29,40 @@ export default function App() {
   const [custom, setCustom] = useState(null)
 
   useEffect(() => {
-    if (screen !== 'splash') return
-    const t = setTimeout(() => setScreen(profile ? 'home' : 'nickname'), 500)
+    const t = setTimeout(() => setSplashDone(true), 500)
     return () => clearTimeout(t)
-  }, [screen, profile])
+  }, [])
 
-  if (screen === 'splash') return <div className="screen center"><div className="logo">Forge</div></div>
-  if (screen === 'nickname') return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); setProfile(p); setScreen('home') }} />
+  useEffect(() => onAuthStateChanged(auth, async (u) => {
+    if (!u) {
+      clearUserData()
+      setProfile(null)
+      setScreen('home')
+      setUser(null)
+      return
+    }
+    try {
+      await loadUserData(u)
+      setProfile(getProfile())
+      setLoadError(false)
+      setUser(u)
+    } catch (e) {
+      console.error(e)
+      setLoadError(true)
+    }
+  }), [])
+
+  if (loadError) return (
+    <div className="screen center">
+      <div className="logo">Forge</div>
+      <p className="muted">Couldn't load your data. Check your connection.</p>
+      <Button onClick={() => location.reload()}>Retry</Button>
+      <Button variant="secondary" onClick={() => { setLoadError(false); signOut(auth) }}>Sign out</Button>
+    </div>
+  )
+  if (!splashDone || user === undefined) return <div className="screen center"><div className="logo">Forge</div></div>
+  if (!user) return <Login />
+  if (!profile) return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); setProfile(p) }} />
   if (screen === 'home') return (
     <div className="screen">
       <div>
@@ -40,6 +73,7 @@ export default function App() {
         <Button onClick={() => setScreen('category')}>Start Workout</Button>
         <Button variant="secondary" onClick={() => setScreen('create')}>Create Your Own</Button>
         <Button variant="secondary" onClick={() => setScreen('history')}>History</Button>
+        <Button variant="secondary" onClick={() => signOut(auth)}>Sign out</Button>
       </div>
     </div>
   )
