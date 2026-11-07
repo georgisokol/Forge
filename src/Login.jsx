@@ -45,15 +45,15 @@ export default function Login() {
   return (
     <div className="screen" style={{ alignItems: 'stretch', textAlign: 'center' }}>
       <div className="logo">Forge</div>
-      <Card className="flex flex-1 flex-col justify-center gap-3 p-5">
-        <form className="flex flex-col gap-3" onSubmit={signIn}>
-          <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Button type="submit" size="sm" className="w-full" disabled={busy || !filled}>Sign in</Button>
+      <Card className="flex flex-1 flex-col justify-center gap-5 p-6">
+        <form className="flex flex-col gap-5" onSubmit={signIn}>
+          <Input className="p-5 text-[1.25rem]" type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input className="p-5 text-[1.25rem]" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Button type="submit" size="lg" disabled={busy || !filled}>Sign in</Button>
         </form>
-        <Button variant="secondary" size="sm" className="w-full" disabled={busy || !filled} onClick={register}>Register</Button>
-        <Button variant="outline" size="sm" className="w-full" disabled={busy} onClick={google}>Continue with Google</Button>
-        <Button variant="muted" size="sm" className="w-full" disabled={busy} onClick={reset}>Forgot password</Button>
+        <Button variant="secondary" size="lg" disabled={busy || !filled} onClick={register}>Register</Button>
+        <Button variant="outline" size="lg" disabled={busy} onClick={google}>Continue with Google</Button>
+        <Button variant="muted" disabled={busy} onClick={reset}>Forgot password</Button>
         {message && <p className={message.error ? 'failed' : 'muted'} style={{ margin: 0, textAlign: 'center' }}>{message.text}</p>}
       </Card>
     </div>
