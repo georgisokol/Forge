@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, categoryForSet, candidatePool, pickExercise, rollTarget, totalSeconds } from './data.js'
+import { CATEGORIES, categoryForSet, candidatePool, spinPool, pickExercise, rollTarget, totalSeconds } from './data.js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +52,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
 
   const pool = () => candidatePool({ category, level, setIndex, totalSets, prevTier: logged.at(-1)?.tier, history: logged })
 
-  const startSpin = (candidates = pool()) => {
+  const startSpin = (candidates = spinPool({ category, level, setIndex })) => {
     const names = candidates.map((x) => x.name)
     clearInterval(spinTimer.current)
     spinTimer.current = setInterval(() => setDisplay(names[Math.floor(Math.random() * names.length)]), 70)
@@ -94,7 +94,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
     setSkipped([])
     setCurrent(null)
     setPhase('spinning')
-    startSpin(candidatePool({ category, level, setIndex: setIndex + 1, totalSets, prevTier: entry.tier, history: next }))
+    startSpin(spinPool({ category, level, setIndex: setIndex + 1 }))
   }
 
   const gamble = () => {

@@ -89,6 +89,12 @@ export function candidatePool({ category, level, setIndex, prevTier, history = [
   return level === 'intermediate' ? rotate(base, history) : base
 }
 
+// Everything the shuffle animation may flash through; the rotation filter stays hidden from the user.
+export function spinPool({ category, level, setIndex }) {
+  const list = EXERCISES[categoryForSet(category, setIndex)]
+  return level === 'elite' ? list : list.filter((x) => !x.eliteOnly)
+}
+
 const HARD_STREAK = 3
 
 // Intermediate variety: easy set after a streak of hard ones, least-used exercises first, never the last one again.
