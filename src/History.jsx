@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { catInfo, fmtSet, levelLabel, totalReps } from './data.js'
+import { CATEGORIES, catInfo, fmtSet, isTimed, levelLabel, totalReps } from './data.js'
 import { getHistory } from './storage.js'
 import Header from './Header.jsx'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -33,6 +33,32 @@ export default function History({ onBack }) {
   )
 }
 
+// Most recent set of the same exercise in an older workout (history is newest-first).
+const previousSet = (history, index, exercise) => {
+  for (const w of history.slice(index + 1)) {
+    const match = w.sets.findLast((x) => x.exercise === exercise)
+    if (match) return match
+  }
+  return null
+}
+
+const Delta = ({ value }) => {
+  if (!value) return null
+  return <span style={{ color: value > 0 ? '#3fb950' : '#d0556a' }}> ({value > 0 ? '+' : ''}{+value.toFixed(2)})</span>
+}
+
+function SetText({ x, prev, custom }) {
+  const repDelta = prev ? x.actual - prev.actual : 0
+  const weightDelta = prev && x.weight != null && prev.weight != null ? x.weight - prev.weight : 0
+  if (!custom) return <>{fmtSet(x)}<Delta value={repDelta} /> · {x.status === 'done' ? 'Banked' : 'Failed'}</>
+  return (
+    <>
+      {x.actual}{isTimed(x) ? 's' : ' reps'}<Delta value={repDelta} />
+      {x.weight != null && <> @ {x.weight}kg<Delta value={weightDelta} /></>}
+    </>
+  )
+}
+
 function Log({ history }) {
   const [open, setOpen] = useState(null)
   return (
@@ -41,15 +67,15 @@ function Log({ history }) {
         <TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Level</TableHead><TableHead className="w-8" /></TableRow>
       </TableHeader>
       <TableBody>
-        {history.map((w) => (
-          <Row key={w.id} w={w} open={open === w.id} toggle={() => setOpen(open === w.id ? null : w.id)} />
+        {history.map((w, i) => (
+          <Row key={w.id} w={w} history={history} index={i} open={open === w.id} toggle={() => setOpen(open === w.id ? null : w.id)} />
         ))}
       </TableBody>
     </Table>
   )
 }
 
-function Row({ w, open, toggle }) {
+function Row({ w, history, index, open, toggle }) {
   const c = catInfo(w)
   return (
     <>
@@ -65,7 +91,7 @@ function Row({ w, open, toggle }) {
             {w.sets.map((x, i) => (
               <div key={i} className="flex justify-between gap-2.5 py-2 text-sm">
                 <span>{i + 1}. {x.exercise}</span>
-                <span className={x.status}>{fmtSet(x)} · {x.status === 'done' ? 'Banked' : 'Failed'}</span>
+                <span className={x.status}><SetText x={x} prev={previousSet(history, index, x.exercise)} custom={!CATEGORIES[w.category]} /></span>
               </div>
             ))}
           </TableCell>
