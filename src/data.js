@@ -80,12 +80,28 @@ export const categoryForSet = (category, setIndex) =>
   category === 'combo' ? (setIndex % 2 === 0 ? 'push' : 'pull') : category
 
 // Exercises allowed for this set given level, position and the previously logged tier.
-export function candidatePool({ category, level, setIndex, prevTier }) {
+export function candidatePool({ category, level, setIndex, prevTier, history = [] }) {
   const list = EXERCISES[categoryForSet(category, setIndex)]
   if (level === 'elite') return list
   // Beginner and intermediate share the pool (no elite-only moves); no back-to-back Tier 3.
   const pool = list.filter((x) => !x.eliteOnly)
-  return prevTier === 3 ? pool.filter((x) => x.tier !== 3) : pool
+  const base = prevTier === 3 ? pool.filter((x) => x.tier !== 3) : pool
+  return level === 'intermediate' ? rotate(base, history) : base
+}
+
+const HARD_STREAK = 3
+
+// Intermediate variety: easy set after a streak of hard ones, least-used exercises first, never the last one again.
+function rotate(pool, history) {
+  const recent = history.slice(-HARD_STREAK)
+  const afterHardStreak = recent.length === HARD_STREAK && recent.every((h) => h.tier >= 2)
+  const easy = afterHardStreak ? pool.filter((x) => x.tier === 1) : []
+  const candidates = easy.length ? easy : pool
+  const uses = (x) => history.filter((h) => h.exercise === x.name).length
+  const fresh = candidates.filter((x) => x.name !== history.at(-1)?.exercise)
+  const options = fresh.length ? fresh : candidates
+  const least = Math.min(...options.map(uses))
+  return options.filter((x) => uses(x) === least)
 }
 
 // Reps for normal exercises; hold seconds (multiples of 5) for timed ones.
@@ -97,9 +113,12 @@ export function rollTarget(level, ex) {
   return rand(...LEVELS[level].reps[ex.tier])
 }
 
-export const pickExercise = (pool, exclude = []) => {
+// Intermediate picks a tier first so every tier is equally likely regardless of how many exercises it has.
+export const pickExercise = (pool, exclude = [], evenTiers = false) => {
   const filtered = pool.filter((x) => !exclude.includes(x.name))
-  return pick(filtered.length ? filtered : pool)
+  const options = filtered.length ? filtered : pool
+  if (!evenTiers) return pick(options)
+  return pick(pick(Object.values(Object.groupBy(options, (x) => x.tier))))
 }
 
 export const isTimed = (s) => s.unit === 'sec'

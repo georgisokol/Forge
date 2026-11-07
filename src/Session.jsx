@@ -50,7 +50,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
     }
   }, [holdLeft, holdRunning])
 
-  const pool = () => candidatePool({ category, level, setIndex, totalSets, prevTier: logged.at(-1)?.tier })
+  const pool = () => candidatePool({ category, level, setIndex, totalSets, prevTier: logged.at(-1)?.tier, history: logged })
 
   const startSpin = (candidates = pool()) => {
     const names = candidates.map((x) => x.name)
@@ -60,7 +60,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
 
   const land = (exclude) => {
     clearInterval(spinTimer.current)
-    const ex = pickExercise(pool(), exclude)
+    const ex = pickExercise(pool(), exclude, level === 'intermediate')
     const planned = rollTarget(level, ex)
     setCurrent({ ...ex, planned, category: categoryForSet(category, setIndex) })
     setHoldLeft(ex.timed ? planned : 0)
@@ -94,7 +94,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
     setSkipped([])
     setCurrent(null)
     setPhase('spinning')
-    startSpin(candidatePool({ category, level, setIndex: setIndex + 1, totalSets, prevTier: entry.tier }))
+    startSpin(candidatePool({ category, level, setIndex: setIndex + 1, totalSets, prevTier: entry.tier, history: next }))
   }
 
   const gamble = () => {
