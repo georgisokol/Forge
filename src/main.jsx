@@ -10,3 +10,8 @@ import './tailwind.css'
 import './styles.css'
 
 createRoot(document.getElementById('root')).render(<App />)
+
+// iOS Safari ignores user-scalable=no, so block the pinch gesture explicitly.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault())
+}

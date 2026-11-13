@@ -86,3 +86,7 @@ input[type=checkbox] { accent-color:var(--yellow); }
 .level-sword { box-sizing: border-box; }
 .split .level-sword { padding: 1px 6px; border-width: 2px; }
 .split .level-sword .level-sword-svg { max-height: 84px; } .split .level-sword { gap: 2px; padding-bottom: 6px; }
+
+/* No pinch/double-tap zoom; 16px inputs stop iOS zooming on focus. */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+input, select, textarea { font-size: 16px; }
