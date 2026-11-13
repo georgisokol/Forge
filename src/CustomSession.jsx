@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { SessionBack } from './Header.jsx'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { alarm, tick, unlockAudio } from './sound.js'
 
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
-export default function CustomSession({ workout, onFinish }) {
+export default function CustomSession({ workout, onFinish, onBack }) {
   const plan = useMemo(
     () => workout.exercises.flatMap((ex) => Array.from({ length: ex.sets }, (_, i) => ({ ex, n: i + 1 }))),
     [workout],
@@ -16,6 +18,24 @@ export default function CustomSession({ workout, onFinish }) {
   const [logged, setLogged] = useState([])
   const [reps, setReps] = useState('')
   const [weight, setWeight] = useState('')
+  const [holdLeft, setHoldLeft] = useState(null)
+  const [holdRunning, setHoldRunning] = useState(false)
+
+  useEffect(() => {
+    if (!holdRunning) return
+    const t = setInterval(() => setHoldLeft((l) => l - 1), 1000)
+    return () => clearInterval(t)
+  }, [holdRunning])
+
+  useEffect(() => {
+    if (!holdRunning) return
+    if (holdLeft <= 0) {
+      setHoldRunning(false)
+      alarm()
+    } else if (holdLeft <= 3) {
+      tick()
+    }
+  }, [holdLeft, holdRunning])
 
   useEffect(() => {
     if (!startedAt) return
@@ -33,6 +53,8 @@ export default function CustomSession({ workout, onFinish }) {
     setWeight(lastOfExercise?.weight != null ? String(lastOfExercise.weight) : '')
   }, [idx])
 
+  useEffect(() => { setHoldRunning(false); setHoldLeft(null) }, [idx])
+
   const finish = (sets) => onFinish(sets, startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0)
 
   const bank = () => {
@@ -44,6 +66,14 @@ export default function CustomSession({ workout, onFinish }) {
     setLogged(next)
     if (isLast) return finish(next)
     setIdx(idx + 1)
+  }
+
+  const target = parseInt(reps, 10) || 0
+  const holdDone = holdLeft === 0
+  const toggleHold = () => {
+    unlockAudio()
+    if (!holdRunning && (holdLeft == null || holdLeft <= 0)) setHoldLeft(target)
+    setHoldRunning(!holdRunning)
   }
 
   const skip = () => setIdx(idx + 1)
@@ -68,15 +98,15 @@ export default function CustomSession({ workout, onFinish }) {
   return (
     <div className="screen">
       <div className="topbar">
-        <div className="setno">Set <b>{String(idx + 1).padStart(2, '0')}</b> <span className="muted">/ {plan.length}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><SessionBack banked={logged.length > 0} onBack={onBack} onFinish={() => finish(logged)} /><div className="setno">Set <b>{String(idx + 1).padStart(2, '0')}</b> <span className="muted">/ {plan.length}</span></div></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Badge variant="outline">Live</Badge><span className="timer">{fmt(elapsed)}</span></div>
       </div>
       <div className="slot">{ex.name}</div>
       <div className="target">Set {n} of {ex.sets}</div>
       <div className="row">
         <div>
-          <div className="muted" style={{ marginBottom: 6 }}>{ex.timed ? 'Seconds' : 'Reps'}</div>
-          <Input className="text-center font-[family-name:var(--display)] text-[2.2rem] font-bold" type="number" inputMode="numeric" min="0" value={reps} onChange={(e) => setReps(e.target.value)} />
+          <div className="muted" style={{ marginBottom: 6 }}>{ex.timed ? 'Seconds to hold' : 'Reps'}</div>
+          <Input className="text-center font-[family-name:var(--display)] text-[2.2rem] font-bold" type="number" inputMode="numeric" min="0" value={reps} disabled={holdRunning} onChange={(e) => { setReps(e.target.value); setHoldLeft(null) }} />
         </div>
         {ex.weighted && !ex.timed && (
           <div>
@@ -85,6 +115,14 @@ export default function CustomSession({ workout, onFinish }) {
           </div>
         )}
       </div>
+      {ex.timed && (
+        <div className="hold">
+          <div className="time">{fmt(holdLeft ?? target)}</div>
+          <Button variant="outline" disabled={target <= 0 && holdLeft == null} onClick={toggleHold}>
+            {holdRunning ? 'Pause' : holdDone ? 'Restart Timer' : holdLeft != null ? 'Resume' : 'Start Timer'}
+          </Button>
+        </div>
+      )}
       <div style={{ flex: 1 }} />
       <Button variant="bank" size="lg" disabled={reps === ''} onClick={bank}>{isLast ? 'Bank & Finish Workout' : 'Bank'}</Button>
       <div className="row">

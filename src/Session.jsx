@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { CATEGORIES, categoryForSet, candidatePool, spinPool, pickExercise, rollTarget, totalSeconds } from './data.js'
+import { SessionBack } from './Header.jsx'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import HowTo from './HowTo.jsx'
+import { alarm, tick, unlockAudio } from './sound.js'
 
 const MAX_SKIPS = 2
 const PHASE_LABEL = { pre: 'Ready', idle: 'Shuffle', spinning: 'Spinning', landed: 'Live', failing: 'Failed' }
@@ -11,7 +14,7 @@ const fmt = (s) => {
   return `${s < 0 ? '+' : ''}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
 }
 
-export default function Session({ category, level, totalSets, onFinish }) {
+export default function Session({ category, level, totalSets, onFinish, onBack }) {
   const budget = totalSeconds(totalSets)
   const [startedAt, setStartedAt] = useState(null)
   const [elapsed, setElapsed] = useState(0)
@@ -46,7 +49,9 @@ export default function Session({ category, level, totalSets, onFinish }) {
   useEffect(() => {
     if (holdRunning && holdLeft <= 0) {
       setHoldRunning(false)
-      navigator.vibrate?.([200, 100, 200])
+      alarm()
+    } else if (holdRunning && holdLeft <= 3) {
+      tick()
     }
   }, [holdLeft, holdRunning])
 
@@ -61,7 +66,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
   const land = (exclude) => {
     clearInterval(spinTimer.current)
     const ex = pickExercise(pool(), exclude, level === 'intermediate')
-    const planned = rollTarget(level, ex)
+    const planned = rollTarget(level, ex, category)
     setCurrent({ ...ex, planned, category: categoryForSet(category, setIndex) })
     setHoldLeft(ex.timed ? planned : 0)
     setHoldRunning(false)
@@ -126,7 +131,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
   return (
     <div className="screen">
       <div className="topbar">
-        <div className="setno">Set <b>{String(setIndex + 1).padStart(2, '0')}</b> <span className="muted">/ {totalSets}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><SessionBack banked={logged.length > 0} onBack={onBack} onFinish={() => finish(logged)} /><div className="setno">Set <b>{String(setIndex + 1).padStart(2, '0')}</b> <span className="muted">/ {totalSets}</span></div></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Badge variant="outline">{PHASE_LABEL[phase]}</Badge>
           <span className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</span>
@@ -134,7 +139,10 @@ export default function Session({ category, level, totalSets, onFinish }) {
       </div>
       {category === 'combo' && <div><Badge style={{ '--c': cat.color }}>{cat.label}</Badge></div>}
 
-      <div className={`slot ${phase === 'spinning' ? 'spin' : ''}`}>{display}</div>
+      <div className={`slot ${phase === 'spinning' ? 'spin' : ''}`} style={current && phase !== 'spinning' ? { paddingBottom: 56 } : undefined}>
+        {display}
+        {current && phase !== 'spinning' && <HowTo name={current.name} />}
+      </div>
 
       {current && phase !== 'spinning' && (
         timed ? (
@@ -142,7 +150,7 @@ export default function Session({ category, level, totalSets, onFinish }) {
             <div className="target">Hold {current.planned} sec</div>
             <div className="time">{fmt(Math.max(holdLeft, 0))}</div>
             {phase === 'landed' && !holdDone && (
-              <Button variant="outline" onClick={() => setHoldRunning(!holdRunning)}>{holdRunning ? 'Pause' : holdLeft < current.planned ? 'Resume' : 'Start Timer'}</Button>
+              <Button variant="outline" onClick={() => { unlockAudio(); setHoldRunning(!holdRunning) }}>{holdRunning ? 'Pause' : holdLeft < current.planned ? 'Resume' : 'Start Timer'}</Button>
             )}
           </div>
         ) : (

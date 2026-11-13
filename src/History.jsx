@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { CATEGORIES, catInfo, fmtSet, isTimed, levelLabel, totalReps } from './data.js'
+import { CATEGORIES, HIIT_EXERCISES, HIIT_WORK, catInfo, fmtSet, isTimed, levelLabel, totalReps } from './data.js'
 import { getHistory } from './storage.js'
 import Header from './Header.jsx'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -14,6 +14,18 @@ const maxWeight = (sets) => Math.max(0, ...sets.map((x) => x.weight ?? 0))
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: '2-digit' })
 
+// Rising-arrow trend icon standing in for the word "Progress".
+function TabIcon({ label }) {
+  return (
+    <span className="flex items-center gap-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.200" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 18l6-6 4 4 8-9M15 7h6v6" />
+      </svg>
+      {label}
+    </span>
+  )
+}
+
 export default function History({ onBack }) {
   const [tab, setTab] = useState('log')
   const history = useMemo(() => [...getHistory()].reverse(), [])
@@ -22,13 +34,17 @@ export default function History({ onBack }) {
     <div className="screen">
       <Header title="History" onBack={onBack} />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="log">Log</TabsTrigger>
-          <TabsTrigger value="graph">Progress</TabsTrigger>
-          {hasWeighted && <TabsTrigger value="weight">Progress with weight</TabsTrigger>}
+        <TabsList className="overflow-x-auto">
+          <TabsTrigger value="log" className="shrink-0 whitespace-nowrap">Log</TabsTrigger>
+          <TabsTrigger value="graph" className="shrink-0 whitespace-nowrap"><TabIcon label="Shuffler" /></TabsTrigger>
+          <TabsTrigger value="cardio" className="shrink-0 whitespace-nowrap"><TabIcon label="Cardio" /></TabsTrigger>
+          {hasWeighted && <TabsTrigger value="weight" className="shrink-0 whitespace-nowrap"><TabIcon label="Weight" /></TabsTrigger>}
         </TabsList>
       </Tabs>
-      {history.length === 0 ? <p className="muted">No workouts yet.</p> : tab === 'log' ? <Log history={history} /> : <Graph key={tab} history={history} weighted={tab === 'weight'} />}
+      {history.length === 0 ? <p className="muted">No workouts yet.</p>
+        : tab === 'log' ? <Log history={history} />
+        : tab === 'cardio' ? <Cardio history={history} />
+        : <Graph key={tab} history={history} weighted={tab === 'weight'} />}
     </div>
   )
 }
@@ -105,13 +121,57 @@ function Row({ w, history, index, open, toggle }) {
 const Marker = ({ cx, cy, payload, levelKey, color }) => {
   if (cx == null || cy == null || payload[levelKey] == null) return null
   const level = payload[levelKey]
-  if (level === 'beginner' || level === 'custom') return <circle cx={cx} cy={cy} r={4} fill={color} />
+  if (level === 'beginner' || level === 'easy' || level === 'custom') return <circle cx={cx} cy={cy} r={4} fill={color} />
   if (level === 'intermediate') return <rect x={cx - 5} y={cy - 5} width={10} height={10} fill={color} />
   return <polygon points={`${cx},${cy - 7} ${cx + 7},${cy} ${cx},${cy + 7} ${cx - 7},${cy}`} fill={color} />
 }
 
+const hiitRounds = (w) => +(w.sets.length / HIIT_EXERCISES.length).toFixed(1)
+const fmtMinutes = (seconds) => `${Math.round(seconds / 60)} min`
+
+function Cardio({ history }) {
+  const sessions = useMemo(() => history.filter((w) => w.category === 'hiit'), [history])
+  if (sessions.length === 0) return <p className="muted">No HIIT workouts yet.</p>
+  const chrono = [...sessions].reverse()
+  const totalRounds = +sessions.reduce((a, w) => a + hiitRounds(w), 0).toFixed(1)
+  const activeSeconds = sessions.reduce((a, w) => a + w.sets.length * HIIT_WORK, 0)
+  const best = Math.max(...sessions.map(hiitRounds))
+  const data = chrono.map((w) => ({ date: fmtDate(w.date), rounds: hiitRounds(w) }))
+  const color = CATEGORIES.hiit.color
+  return (
+    <>
+      <div className="stats">
+        <Card className="stat"><b>{sessions.length}</b>Sessions</Card>
+        <Card className="stat"><b>{totalRounds}</b>Rounds</Card>
+        <Card className="stat"><b>{fmtMinutes(activeSeconds)}</b>Work time</Card>
+      </div>
+      <Card>
+        <h2 className="label">Rounds per session · best {best}</h2>
+        <ChartContainer config={{ rounds: { label: 'Rounds', color } }} className="h-48 w-full">
+          <LineChart data={data} margin={{ left: 0, right: 0, top: 8 }}>
+            <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="3 3" />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+            <YAxis tickLine={false} axisLine={false} width={30} fontSize={11} allowDecimals />
+            <ChartTooltip />
+            <Line type="monotone" dataKey="rounds" name="Rounds" stroke={color} strokeWidth={2} dot={{ r: 4, fill: color }} />
+          </LineChart>
+        </ChartContainer>
+      </Card>
+      <Card>
+        <h2 className="label">Sessions</h2>
+        {sessions.map((w) => (
+          <div key={w.id} className="flex justify-between py-1.5 text-sm">
+            <span>{fmtDate(w.date)}</span>
+            <span>{hiitRounds(w)} {hiitRounds(w) === 1 ? 'round' : 'rounds'} · {fmtMinutes(w.duration)}</span>
+          </div>
+        ))}
+      </Card>
+    </>
+  )
+}
+
 function Graph({ history, weighted }) {
-  const chrono = useMemo(() => [...history].reverse().filter((w) => isWeighted(w) === weighted), [history, weighted])
+  const chrono = useMemo(() => [...history].reverse().filter((w) => w.category !== 'hiit' && isWeighted(w) === weighted), [history, weighted])
   const cats = useMemo(() => {
     const map = new Map()
     chrono.forEach((w) => map.has(w.category) || map.set(w.category, catInfo(w)))
