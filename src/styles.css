@@ -71,9 +71,18 @@ input[type=checkbox] { accent-color:var(--yellow); }
 @keyframes forge-pulse { 0%, 100% { opacity: .55; } 40% { opacity: 1; } }
 
 /* Level sword on home */
-.level-sword { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; width: 100%; padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; color: inherit; font: inherit; cursor: pointer; }
+.level-sword { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; width: 100%; min-height: 0; padding: 12px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; color: inherit; font: inherit; cursor: pointer; }
 .level-sword-rise { transition: transform 1.6s cubic-bezier(.25, .8, .3, 1); }
 .sword-glow { filter: drop-shadow(0 0 4px rgba(245, 197, 24, .45)); }
 .sw-static { fill: none; stroke: var(--yellow); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .sw-detail { stroke: var(--bg); stroke-width: 2; opacity: .55; }
 .level-sword-level { font-family: var(--display); font-size: 2rem; letter-spacing: .08em; text-transform: uppercase; color: var(--yellow); }
+
+.split .level-sword { flex: 1 1 0px; justify-content: center; }
+.level-sword-svg { flex: 1 1 0px; min-height: 0; width: 100%; max-height: 110px; }
+.level-sword-level { font-size: 1.5rem; line-height: 1; }
+.split button { flex: 1 1 0; }
+.split .level-sword { font-size: .9rem; letter-spacing: normal; flex-direction: column; background: var(--panel); border: 1px solid var(--line); color: inherit; }
+.level-sword { box-sizing: border-box; }
+.split .level-sword { padding: 1px 6px; border-width: 2px; }
+.split .level-sword .level-sword-svg { max-height: 84px; } .split .level-sword { gap: 2px; padding-bottom: 6px; }

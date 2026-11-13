@@ -26,7 +26,7 @@ export default function LevelSword({ onClick }) {
   const outline = [BLADE, GUARD, GRIP, POMMEL]
   return (
     <button type="button" className="level-sword" onClick={onClick} aria-label={`Level ${level}, ${into} of ${WORKOUTS_PER_LEVEL} workouts`}>
-      <svg width="260" height="124" viewBox="0 0 210 100" aria-hidden="true">
+      <svg className="level-sword-svg" viewBox="0 0 210 100" aria-hidden="true">
         <defs>
           <clipPath id="sword-fill-clip">
             <rect x="0" y="0" width="100" height={H} className="level-sword-rise" style={{ transform: `translateY(${H * (1 - fill)}px)` }} />

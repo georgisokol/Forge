@@ -90,8 +90,8 @@ export default function App() {
         />
         <p className="muted" style={{ margin: '6px 0 0' }}>Time to forge.</p>
       </div>
-      <LevelSword onClick={() => setScreen('history')} />
       <div className="split">
+        <LevelSword onClick={() => setScreen('history')} />
         <Button onClick={() => setScreen('category')}>Start Workout</Button>
         <Button variant="secondary" onClick={() => setScreen('create')}>Create Your Own</Button>
         <Button variant="secondary" onClick={() => setScreen('history')}>History</Button>
