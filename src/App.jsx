@@ -96,6 +96,7 @@ export default function App() {
         <Button variant="secondary" onClick={() => setScreen('create')}>Create Your Own</Button>
         <Button variant="secondary" onClick={() => setScreen('history')}>History</Button>
       </div>
+      <div className="muted" style={{ textAlign: 'center', fontSize: '.75rem' }}>Version {__APP_VERSION__}</div>
     </div>
   )
   if (screen === 'category') return (
