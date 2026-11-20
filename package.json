@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:local": "VITE_EMULATORS=1 vite",
+    "emulators": "JAVA_HOME=$(/usr/libexec/java_home -v 21+) PATH=$(/usr/libexec/java_home -v 21+)/bin:$PATH npx -y firebase-tools emulators:start --project demo-forge"
   },
   "keywords": [],
   "author": "",

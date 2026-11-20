@@ -39,18 +39,23 @@ export default function Summary({ workout, onSave, onDiscard }) {
         ))}
       </Card>
 
-      <Card>
-        <h2 className="label">Sets</h2>
-        {sets.map((s, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-            <span>{i + 1}. {s.exercise}</span>
-            <span className={s.status}>{fmtSet(s)}</span>
-          </div>
-        ))}
-      </Card>
+      {(workout.group ? workout.group.participants : [null]).map((p) => {
+        const mine = p ? sets.map((s) => ({ ...s, ...s.results[p.uid] })) : sets
+        return (
+          <Card key={p?.uid ?? 'solo'}>
+            <h2 className="label">{p ? `${p.name} · ${totalReps(mine)} reps` : 'Sets'}</h2>
+            {mine.map((s, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                <span>{i + 1}. {s.exercise}</span>
+                <span className={s.status}>{fmtSet(s)}</span>
+              </div>
+            ))}
+          </Card>
+        )
+      })}
 
       <div style={{ flex: 1 }} />
-      <Button variant="bank" size="lg" onClick={onSave}>Save Workout</Button>
+      <Button variant="bank" size="lg" onClick={onSave}>{workout.group ? `Save for all ${workout.group.participants.length}` : 'Save Workout'}</Button>
       <Confirm title="Discard this workout?" confirmLabel="Discard" onConfirm={onDiscard} trigger={<Button variant="muted">Discard</Button>} />
     </div>
   )

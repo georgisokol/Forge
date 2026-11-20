@@ -144,3 +144,16 @@ button.cat > div.muted { margin-top: 0; max-width: 100%; overflow: hidden; text-
 .signout{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:50%;cursor:pointer;background:transparent;color:var(--muted);border:1.5px solid var(--line);transition:color .15s,border-color .15s,background .15s}
 .signout:hover,.signout:focus-visible{color:var(--yellow);border-color:var(--yellow);background:rgba(242,183,5,.08);outline:none}
 .signout:active{transform:scale(.94)}
+
+/* Group workouts */
+.crew-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.crew-chip { display:flex; align-items:baseline; gap:8px; padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--panel); color:var(--text); font:inherit; font-size:.9rem; cursor:pointer; }
+.crew-chip b { font-family:var(--display); color:var(--yellow); }
+.crew-chip.short b { color:#d0556a; }
+.crew-chip.on { border-color:var(--yellow); }
+.icon-btn { position:relative; }
+.icon-btn .dot { position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:#d0556a; border:2px solid var(--bg); }
+.friend-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+.friend-row:last-child { border-bottom:0; }
+.friend-row .actions { display:flex; gap:8px; }
+.with-tag { font-size:.75rem; color:var(--muted); }

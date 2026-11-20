@@ -17,7 +17,9 @@ const fmt = (s) => {
   return `${s < 0 ? '+' : ''}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
 }
 
-export default function Session({ category, level, totalSets, onFinish, onBack }) {
+// crew: null for solo, otherwise [{ uid, name }] with the host first. In a group every set is shared;
+// Bank credits everyone with the target, and tapping a person's chip logs a lower number for just them.
+export default function Session({ category, level, totalSets, crew = null, onFinish, onBack }) {
   const budget = totalSeconds(totalSets)
   const [startedAt, setStartedAt] = useState(null)
   useBackHandler(onBack, !startedAt)
@@ -33,6 +35,8 @@ export default function Session({ category, level, totalSets, onFinish, onBack }
   const [failValue, setFailValue] = useState('')
   const [holdLeft, setHoldLeft] = useState(0)
   const [holdRunning, setHoldRunning] = useState(false)
+  const [overrides, setOverrides] = useState({}) // uid -> actual, for group members who fell short this set
+  const [editing, setEditing] = useState(null) // uid whose number is being entered
   const spinTimer = useRef(null)
   const landTimer = useRef(null)
 
@@ -93,6 +97,15 @@ export default function Session({ category, level, totalSets, onFinish, onBack }
       exercise: current.name, category: current.category, tier: current.tier, muscles: current.muscles,
       unit: current.timed ? 'sec' : 'reps', planned: current.planned, actual, status,
     }
+    if (crew) {
+      entry.results = Object.fromEntries(crew.map(({ uid }) => {
+        const got = overrides[uid]
+        return [uid, got == null ? { actual: current.planned, status: 'done' } : { actual: got, status: got >= current.planned ? 'done' : 'failed' }]
+      }))
+      Object.assign(entry, entry.results[crew[0].uid])
+      setOverrides({})
+      setEditing(null)
+    }
     const next = [...logged, entry]
     setLogged(next)
     setFailValue('')
@@ -120,6 +133,8 @@ export default function Session({ category, level, totalSets, onFinish, onBack }
   const skip = () => {
     const ex = [...skipped, current.name]
     setSkipped(ex)
+    setOverrides({})
+    setEditing(null)
     setSkips(skips + 1)
     setHoldRunning(false)
     setPhase('spinning')
@@ -133,6 +148,19 @@ export default function Session({ category, level, totalSets, onFinish, onBack }
   const remaining = budget - elapsed
   const cat = CATEGORIES[categoryForSet(category, setIndex)]
   const unit = timed ? 'sec' : 'reps'
+  const allShort = crew && crew.every(({ uid }) => overrides[uid] != null)
+  const saveEdit = () => {
+    const n = Math.max(0, parseInt(failValue, 10) || 0)
+    setOverrides({ ...overrides, [editing]: Math.min(n, current.planned) })
+    setEditing(null)
+    setFailValue('')
+  }
+  const clearEdit = () => {
+    const { [editing]: _, ...rest } = overrides
+    setOverrides(rest)
+    setEditing(null)
+    setFailValue('')
+  }
 
   return (
     <div className="screen">
@@ -169,13 +197,35 @@ export default function Session({ category, level, totalSets, onFinish, onBack }
       {phase === 'spinning' && (skips === 0
         ? <Button onClick={() => land([])}>Stop</Button>
         : <Button disabled>Shuffling…</Button>)}
-      {phase === 'landed' && (
+      {phase === 'landed' && crew && (
+        <div className="crew-chips">
+          {crew.map(({ uid, name }) => {
+            const got = overrides[uid]
+            return (
+              <button key={uid} type="button" className={`crew-chip ${editing === uid ? 'on' : ''} ${got != null && got < current.planned ? 'short' : ''}`}
+                onClick={() => { setFailValue(got != null ? String(got) : ''); setEditing(editing === uid ? null : uid) }}>
+                {name}<b>{got ?? current.planned}{timed ? 's' : ''}</b>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {phase === 'landed' && editing && (
         <>
-          <Button variant="bank" size="lg" disabled={timed && !holdDone} onClick={() => finishSet(current.planned, 'done')}>
-            {isLast ? 'Bank & Finish Workout' : 'Bank'}
+          <Input type="number" inputMode="numeric" min="0" autoFocus placeholder={`${crew.find((m) => m.uid === editing).name}: ${timed ? 'seconds held' : 'reps done'}`} value={failValue} onChange={(e) => setFailValue(e.target.value)} />
+          <div className="row">
+            <Button variant="muted" onClick={overrides[editing] != null ? clearEdit : () => { setEditing(null); setFailValue('') }}>{overrides[editing] != null ? 'Hit target' : 'Cancel'}</Button>
+            <Button variant="destructive" disabled={failValue === ''} onClick={saveEdit}>Log {unit}</Button>
+          </div>
+        </>
+      )}
+      {phase === 'landed' && !editing && (
+        <>
+          <Button variant="bank" size="lg" disabled={timed && !holdDone && !allShort} onClick={() => finishSet(current.planned, 'done')}>
+            {isLast ? 'Bank & Finish Workout' : crew ? 'Bank for all' : 'Bank'}
           </Button>
           <div className="row">
-            <Button variant="destructive" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</Button>
+            {!crew && <Button variant="destructive" onClick={() => { setHoldRunning(false); setPhase('failing') }}>Failed</Button>}
             <Button variant="muted" disabled={skips >= MAX_SKIPS} onClick={skip}>Skip ({MAX_SKIPS - skips})</Button>
           </div>
           <button type="button" className="gamble" disabled={gamblesLeft <= 0 || holdRunning} onClick={gamble}>

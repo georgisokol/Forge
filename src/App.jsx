@@ -3,7 +3,9 @@ import { runBackHandler } from './backBus.js'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { CATEGORIES, CORE_LEVELS, CORE_ROUND_OPTIONS, LEVELS } from './data.js'
 import { auth } from './firebase.js'
-import { clearUserData, getCustomIntervals, getCustomWorkouts, getHistory, getProfile, loadUserData, saveProfile, saveWorkout } from './storage.js'
+import { clearUserData, getCustomIntervals, getCustomWorkouts, getHistory, getProfile, getUid, loadUserData, saveFriendWorkout, saveProfile, saveWorkout } from './storage.js'
+import { clearFriends, getFriends, getIncoming, loadFriends, publishDirectory } from './friends.js'
+import Friends, { CrewPicker } from './Friends.jsx'
 import Login from './Login.jsx'
 import Forging from './Forging.jsx'
 import LevelSword from './LevelSword.jsx'
@@ -53,6 +55,7 @@ export default function App() {
   const [custom, setCustom] = useState(null)
   const [historySlide, setHistorySlide] = useState('log')
   const [intervalWorkout, setIntervalWorkout] = useState(null)
+  const [crew, setCrew] = useState(null) // [{ uid, name }] with the host first, or null for solo
 
   // Android back button: one history entry is held open on every screen except home, so back runs the
   // current screen's own back action; on home there is no entry, so back closes the app.
@@ -88,6 +91,7 @@ export default function App() {
   useEffect(() => onAuthStateChanged(auth, async (u) => {
     if (!u) {
       clearUserData()
+      clearFriends()
       setProfile(null)
       setScreen('home')
       setUser(null)
@@ -96,6 +100,8 @@ export default function App() {
     setUser(undefined)
     try {
       await Promise.all([loadUserData(u), new Promise((r) => setTimeout(r, FORGING_MS))])
+      // Friends are optional: a failure here must not lock the user out of their own data.
+      await loadFriends(u, getProfile()?.nickname).catch((e) => console.error('Friends load failed', e))
       setProfile(getProfile())
       setLoadError(false)
       setUser(u)
@@ -115,7 +121,7 @@ export default function App() {
   )
   if (!splashDone || user === undefined) return <Forging />
   if (!user) return <Login />
-  if (!profile) return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); setProfile(p) }} />
+  if (!profile) return <Nickname onSave={(nickname) => { const p = { nickname }; saveProfile(p); publishDirectory(nickname); setProfile(p) }} />
   const skillCount = Object.values(SKILL_LEVELS).reduce((n, l) => n + l.skills.length, 0)
   if (screen === 'home') return (
     <div className="screen">
@@ -123,6 +129,13 @@ export default function App() {
         <Header
           title={`Hey, ${profile.nickname}`}
           right={(
+            <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" aria-label="Friends" className="signout icon-btn" onClick={() => setScreen('friends')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5M16 4.3a3.5 3.5 0 0 1 0 6.4M18 14.8c1.9.8 3.1 2.6 3.5 5.2" />
+              </svg>
+              {getIncoming().length > 0 && <span className="dot" />}
+            </button>
             <Confirm
               title="Sign out?"
               description="You'll need to sign in again to see your workouts."
@@ -136,6 +149,7 @@ export default function App() {
                 </button>
               )}
             />
+            </div>
           )}
         />
         <p className="muted" style={{ margin: '6px 0 0' }}>Time to forge.</p>
@@ -163,6 +177,7 @@ export default function App() {
     </div>
   )
   if (screen === 'skills') return <Skills onBack={() => setScreen('home')} />
+  if (screen === 'friends') return <Friends onBack={() => setScreen('home')} />
   if (screen === 'daily') return <Daily onBack={() => setScreen('home')} onProgress={() => { setHistorySlide('daily'); setScreen('history') }} />
   if (screen === 'category') {
     const openCategory = (key) => {
@@ -288,17 +303,28 @@ export default function App() {
         ))}
       </ToggleGroup>
       <div style={{ flex: 1 }} />
-      <Button onClick={() => setScreen('session')}>Continue · {sets} sets</Button>
+      <Button onClick={() => { setCrew(null); setScreen(getFriends().length ? 'crew' : 'session') }}>Continue · {sets} sets</Button>
     </div>
+  )
+  if (screen === 'crew') return (
+    <CrewPicker
+      onBack={() => setScreen('sets')}
+      onContinue={(picked) => {
+        setCrew(picked.length ? [{ uid: getUid(), name: profile.nickname }, ...picked.map((f) => ({ uid: f.uid, name: f.nickname }))] : null)
+        setScreen('session')
+      }}
+    />
   )
   if (screen === 'session') return (
     <Session
       category={category}
       level={level}
       totalSets={sets}
-      onBack={() => setScreen('sets')}
+      crew={crew}
+      onBack={() => setScreen(getFriends().length ? 'crew' : 'sets')}
       onFinish={(logged, duration) => {
-        setPending({ id: Date.now(), date: new Date().toISOString(), category, level, sets: logged, duration })
+        const id = Date.now()
+        setPending({ id, date: new Date().toISOString(), category, level, sets: logged, duration, ...(crew && { group: { id, hostUid: crew[0].uid, participants: crew } }) })
         setScreen('summary')
       }}
     />
@@ -317,7 +343,17 @@ export default function App() {
   if (screen === 'summary') return (
     <Summary
       workout={pending}
-      onSave={() => { saveWorkout(pending); setPending(null); setHistorySlide('log'); setScreen('history') }}
+      onSave={() => {
+        if (pending.group) {
+          // One save writes every participant's own copy: same id and group, their own reps per set.
+          pending.group.participants.forEach(({ uid }) => {
+            const copy = { ...pending, sets: pending.sets.map(({ results, ...s }) => ({ ...s, ...results[uid] })) }
+            if (uid === pending.group.hostUid) saveWorkout(copy)
+            else saveFriendWorkout(uid, copy)
+          })
+        } else saveWorkout(pending)
+        setPending(null); setHistorySlide('log'); setScreen('history')
+      }}
       onDiscard={() => { setPending(null); setScreen('home') }}
     />
   )

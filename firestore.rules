@@ -1,8 +1,41 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isFriendOf(uid) { return exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)); }
+
     match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Accepting a request from {uid}: the accepter writes themselves into the requester's friend list.
+    // Either side may remove the friendship from the other's list.
+    match /users/{uid}/friends/{fid} {
+      allow create: if signedIn() && request.auth.uid == fid
+        && exists(/databases/$(database)/documents/friendRequests/$(uid + '_' + fid));
+      allow delete: if signedIn() && request.auth.uid == fid;
+    }
+
+    // Group workouts: an accepted friend may create (never edit or delete) a workout they hosted.
+    match /users/{uid}/workouts/{wid} {
+      allow create: if signedIn() && isFriendOf(uid)
+        && request.resource.data.group.hostUid == request.auth.uid;
+    }
+
+    // Exact-email lookup only: get is allowed, listing is not.
+    match /directory/{email} {
+      allow get: if signedIn();
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.auth.token.email != null && email == request.auth.token.email.lower();
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /friendRequests/{id} {
+      allow read: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.from == request.auth.uid
+        && request.resource.data.to != request.auth.uid
+        && id == request.auth.uid + '_' + request.resource.data.to;
+      allow delete: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
     }
   }
 }

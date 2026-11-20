@@ -55,6 +55,7 @@ export function clearUserData() {
   cache = { profile: null, history: [], customWorkouts: [], customExercises: [], customIntervals: [], daily: { done: [], picks: {} } }
 }
 
+export const getUid = () => uid
 export const getProfile = () => cache.profile
 export const saveProfile = (profile) => { cache.profile = profile; patchUser({ profile }) }
 
@@ -62,6 +63,11 @@ export const getHistory = () => cache.history
 export const saveWorkout = (w) => {
   cache.history = [...cache.history, w]
   setDoc(doc(workoutsCol(), String(w.id)), w).catch(report)
+}
+
+// Group workout copy for a friend; firestore.rules allow this create only for accepted friends.
+export const saveFriendWorkout = (friendUid, w) => {
+  setDoc(doc(db, 'users', friendUid, 'workouts', String(w.id)), w).catch(report)
 }
 
 export const getCustomWorkouts = () => cache.customWorkouts
