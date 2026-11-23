@@ -1,42 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Header from './Header.jsx'
 import { Button } from '@/components/ui/button'
 import { SkillFigure } from './skills/SkillFigure.jsx'
 import { SKILL_LEVELS } from './skills/skillData.js'
-import { alarm, tick, unlockAudio } from './sound.js'
-
-const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-
-// Optional "try it" block: a hold timer with the alarm, or a rep goal. Never blocks the Next button.
-function TryIt({ timer, reps }) {
-  const [left, setLeft] = useState(timer ?? 0)
-  const [running, setRunning] = useState(false)
-
-  useEffect(() => {
-    if (!running) return undefined
-    const t = setInterval(() => setLeft((l) => l - 1), 1000)
-    return () => clearInterval(t)
-  }, [running])
-
-  useEffect(() => {
-    if (!running) return
-    if (left <= 0) { setRunning(false); alarm() } else if (left <= 3) tick()
-  }, [left, running])
-
-  if (reps) return <div className="card flex items-center justify-between !py-2.5"><span className="label">Try it</span><span className="font-[family-name:var(--display)] text-xl text-[var(--yellow)]">{reps} reps</span></div>
-  if (!timer) return null
-  const finished = left <= 0
-  return (
-    <div className="card flex items-center gap-3 !py-2.5">
-      <div className="flex flex-1 flex-col">
-        <span className="label">Hold {timer}s</span>
-        <span className="font-[family-name:var(--display)] text-3xl leading-none text-[var(--yellow)]">{fmt(Math.max(0, left))}</span>
-      </div>
-      <Button size="sm" className="!px-4 !py-2 !text-sm" onClick={() => { if (finished) setLeft(timer); unlockAudio(); setRunning((r) => !r) }}>{running ? 'Pause' : finished ? 'Again' : 'Start'}</Button>
-      <Button size="sm" variant="muted" className="!px-3 !py-2 !text-sm" disabled={left === timer && !running} onClick={() => { setRunning(false); setLeft(timer) }}>Reset</Button>
-    </div>
-  )
-}
+import { TryIt } from './skills/TryIt.jsx'
+import SkillPlan, { planStatus } from './skills/SkillPlan.jsx'
+import { getSkillPlans } from './storage.js'
 
 // Small highlighted step button that sits beside the progress dots.
 function StepButton({ dir, disabled, onClick, label }) {
@@ -81,20 +50,42 @@ function Lesson({ skill, onBack, onDone }) {
   )
 }
 
+const SUB = { fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }
+
 export default function Skills({ onBack }) {
   const [levelKey, setLevelKey] = useState(null)
   const [skill, setSkill] = useState(null)
+  const [view, setView] = useState(null) // elite skills: null = hub, 'lesson' | 'plan'
   const level = SKILL_LEVELS[levelKey]
+  const hasPlans = levelKey === 'elite'
+  const closeSkill = () => { setSkill(null); setView(null) }
 
-  if (skill) return <Lesson skill={skill} onBack={() => setSkill(null)} onDone={() => setSkill(null)} />
+  if (skill && (!hasPlans || view === 'lesson')) return <Lesson skill={skill} onBack={hasPlans ? () => setView(null) : closeSkill} onDone={hasPlans ? () => setView(null) : closeSkill} />
+  if (skill && view === 'plan') return <SkillPlan skill={skill} onBack={() => setView(null)} />
+  if (skill) {
+    const status = planStatus(skill, getSkillPlans()[skill.id])
+    return (
+      <div className="screen">
+        <Header title={skill.name} onBack={closeSkill} />
+        <p className="muted m-0 text-sm">{skill.blurb} · {skill.muscles}</p>
+        <Button variant="secondary" className="cat" style={{ '--c': level.color }} onClick={() => setView('lesson')}>
+          Learn the steps<div className="muted" style={SUB}>{skill.steps.length} steps with form cues</div>
+        </Button>
+        <Button variant="secondary" className="cat" style={{ '--c': level.color }} onClick={() => setView('plan')}>
+          Weekly plan<div className="muted" style={SUB}>{status ?? '4-week cycles: build volume, deload, test, advance'}</div>
+        </Button>
+      </div>
+    )
+  }
 
   if (level) {
+    const plans = getSkillPlans()
     return (
       <div className="screen">
         <Header title={level.label} onBack={() => setLevelKey(null)} />
         {level.skills.map((s) => (
           <Button key={s.id} variant="secondary" className="cat" style={{ '--c': level.color }} onClick={() => setSkill(s)}>
-            {s.name}<div className="muted" style={{ fontSize: '.8rem', textTransform: 'none', fontWeight: 400 }}>{s.blurb}</div>
+            {s.name}<div className="muted" style={SUB}>{(hasPlans && planStatus(s, plans[s.id])) || s.blurb}</div>
           </Button>
         ))}
       </div>

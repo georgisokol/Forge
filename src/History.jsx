@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { CATEGORIES, HIIT_EXERCISES, HIIT_WORK, catInfo, chipLabel, fmtSet, isIntervalWorkout, isTimed, levelLabel, totalReps } from './data.js'
+import { CATEGORIES, HIIT_EXERCISES, HIIT_WORK, catInfo, chipLabel, loadLabel, fmtSet, isIntervalWorkout, isTimed, levelLabel, totalReps } from './data.js'
 import { getDaily, getHistory, getUid } from './storage.js'
 import { dayKey, streakInfo } from './daily.js'
 import Header from './Header.jsx'
@@ -190,7 +190,10 @@ function Row({ w, history, index, open, toggle }) {
           <Badge className="whitespace-nowrap" style={{ '--c': c.color }}>{chipLabel(w)}</Badge>
           {w.group && <div className="with-tag">with {w.group.participants.filter((p) => p.uid !== getUid()).map((p) => p.name).join(', ')}</div>}
         </TableCell>
-        <TableCell className="log-level">{levelLabel(w)}</TableCell>
+        <TableCell className="log-level">
+          {levelLabel(w)}
+          {loadLabel(w.sets) && <div className="with-tag">{loadLabel(w.sets)}</div>}
+        </TableCell>
         <TableCell className="pl-2 pr-5 text-[var(--muted)]">{open ? '▾' : '▸'}</TableCell>
       </TableRow>
       {open && (

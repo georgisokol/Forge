@@ -122,6 +122,14 @@ export default [
     name: 'Weighted Muscle-up',
     blurb: 'Muscle-up with added weight',
     muscles: 'Lats, chest, triceps, core',
+    // The steps teach one movement; the weekly plan progresses it by load instead.
+    planStages: [
+      { title: 'Strict muscle-up', reps: 3 },
+      { title: 'Muscle-up +2.5 kg', reps: 3 },
+      { title: 'Muscle-up +5 kg', reps: 3 },
+      { title: 'Muscle-up +7.5 kg', reps: 3 },
+      { title: 'Muscle-up +10 kg', reps: 3 },
+    ],
     steps: [
       { title: 'Prerequisites', text: 'Be able to do 5+ clean strict muscle-ups and 10+ weighted dips. Warm up wrists and shoulders.', pose: { view: 'front', arm: [-62, -62], leg: [90, 90], anchor: 'bar' } },
       { title: 'Add the weight', text: 'Wear a belt or vest with 2-5 kg and hang with a false grip. Keep your body tight before you pull.', pose: { view: 'front', arm: [-62, -62], leg: [90, 90], anchor: 'bar' } },

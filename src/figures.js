@@ -346,6 +346,8 @@ const ART = {
   'Headbanger Pull-ups': art(side('hang', 'pullTop'), front('fHeadL', 'fHeadR'), 'Pull up with your head to the left of the bar, lower, then pull up to the right.'),
   'L-Knee Sit Pull-ups/Chin-ups': art(side('hangL', 'pullTopL'), front('fHangL', 'fTopL'), 'Keep your knees raised at 90° the whole rep.'),
   '1s Pause Pull-up': art(side('hang', 'pullTop'), front('fHang', 'fTop'), 'Pull up and hold for 1 second with your chin over the bar.'),
+  'Close Grip Muscle-ups': art(side('hang', 'sbDipUp'), front('fHangClose', 'fSbDipUp'), 'Hands close together, almost touching. Pull high to your lower chest, lean over, press to straight arms.'),
+  'Muscle-ups': art(side('hang', 'sbDipUp'), front('fHang', 'fSbDipUp'), 'Pull explosively to your lower chest, lean over the bar, then press to straight arms on top.'),
   'Typewriter Pull-ups': art(side('hang', 'pullTop'), front('fTypeL', 'fTypeR'), 'At the top, slide side to side along the bar with one arm bent and the other straight.'),
 
   Squats: art(side('standArmsFwd', 'squatDown'), front('fSquatUp', 'fSquatDown'), 'Feet shoulder width, knees track over your toes.'),

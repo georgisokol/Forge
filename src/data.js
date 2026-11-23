@@ -5,6 +5,7 @@ export const CATEGORIES = {
   legsFront: { label: 'Legs Front', short: 'Legs Front', sub: 'quad / tibialis', color: '#84982f' },
   legsBack: { label: 'Legs Back', short: 'Legs Back', sub: 'hamstring / glute / calves', color: '#eab308' },
   pullbar: { label: 'Pull-up Bar Only', short: 'PU Bar', sub: 'pull-up bar exercises', color: '#14b8a6' },
+  muscleups: { label: 'Muscle-ups Only', short: 'MU Only', sub: 'EMOM, regular and close grip', color: '#6366f1', mode: 'emom' },
   core: { label: 'Core', sub: '10–15 min circuit', color: '#ef4444', mode: 'core' },
   hiit: { label: 'HIIT', sub: '45s on / 15s off', color: '#ec4899', mode: 'hiit' },
 }
@@ -18,7 +19,11 @@ export const LEVELS = {
 // Timed exercises are held for seconds instead of repped.
 export const HOLD_SECONDS = { beginner: [20, 30], intermediate: [30, 45], elite: [45, 60] }
 
-const e = (name, tier, muscles, opts = {}) => ({ name, tier, muscles, eliteOnly: false, beginnerOnly: false, timed: false, ...opts })
+const e = (name, tier, muscles, opts = {}) => ({ name, tier, muscles, eliteOnly: false, beginnerOnly: false, notBeginner: false, timed: false, ...opts })
+
+// Muscle-ups are intermediate+ only, with their own low rep ranges that shrink as the session goes on (fades),
+// because pull strength and the transition fall apart quickly with fatigue.
+const muscleUp = () => e('Muscle-ups', 3, ['Back', 'Chest', 'Triceps', 'Core'], { notBeginner: true, fades: true, reps: { intermediate: [2, 4], elite: [3, 6] } })
 
 export const EXERCISES = {
   push: [
@@ -47,6 +52,7 @@ export const EXERCISES = {
     e('L-Knee Sit Pull-ups/Chin-ups', 3, ['Back', 'Biceps', 'Core']),
     e('1s Pause Pull-up', 3, ['Back', 'Biceps']),
     e('Typewriter Pull-ups', 3, ['Back', 'Biceps', 'Core'], { eliteOnly: true }),
+    muscleUp(),
   ],
   legsFront: [
     e('Squats', 1, ['Quads', 'Glutes']),
@@ -78,6 +84,14 @@ export const PULLBAR_EXERCISES = [
   e('Pull-ups', 3, ['Back', 'Biceps']),
   e('Wide Pull-ups', 3, ['Back', 'Biceps']),
   e('Headbanger Pull-ups', 3, ['Back', 'Biceps', 'Shoulders']),
+  muscleUp(),
+]
+// Muscle-ups Only runs as an EMOM instead of the shuffler: N reps at the top of every minute, grips alternating.
+export const EMOM_REP_OPTIONS = [1, 2, 3, 4, 5]
+export const EMOM_MINUTE_OPTIONS = [10, 15, 20, 25, 30]
+export const EMOM_GRIPS = [
+  { name: 'Muscle-ups', grip: 'Regular grip', muscles: ['Back', 'Chest', 'Triceps', 'Core'] },
+  { name: 'Close Grip Muscle-ups', grip: 'Close grip', muscles: ['Back', 'Triceps', 'Chest', 'Core'] },
 ]
 const poolOf = (cat) => (cat === 'pullbar' ? PULLBAR_EXERCISES : EXERCISES[cat])
 
@@ -132,7 +146,7 @@ export function candidatePool({ category, level, setIndex, prevTier, history = [
   const list = poolOf(categoryForSet(category, setIndex))
   if (level === 'elite') return list.filter((x) => !x.beginnerOnly)
   // Beginner and intermediate share the pool (no elite-only moves); no back-to-back Tier 3.
-  const pool = list.filter((x) => !x.eliteOnly && (level === 'beginner' || !x.beginnerOnly))
+  const pool = list.filter((x) => allowedFor(x, level))
   const base = prevTier === 3 ? pool.filter((x) => x.tier !== 3) : pool
   return level === 'intermediate' ? rotate(base, history) : base
 }
@@ -140,8 +154,13 @@ export function candidatePool({ category, level, setIndex, prevTier, history = [
 // Everything the shuffle animation may flash through; the rotation filter stays hidden from the user.
 export function spinPool({ category, level, setIndex }) {
   const list = poolOf(categoryForSet(category, setIndex))
-  if (level === 'elite') return list.filter((x) => !x.beginnerOnly)
-  return list.filter((x) => !x.eliteOnly && (level === 'beginner' || !x.beginnerOnly))
+  return list.filter((x) => allowedFor(x, level))
+}
+
+function allowedFor(x, level) {
+  if (level === 'elite') return !x.beginnerOnly
+  if (level === 'beginner') return !x.eliteOnly && !x.notBeginner
+  return !x.eliteOnly && !x.beginnerOnly
 }
 
 const HARD_STREAK = 3
@@ -159,11 +178,22 @@ function rotate(pool, history) {
   return options.filter((x) => uses(x) === least)
 }
 
+// How much a fading exercise's reps shrink by the last set: none in the first half, up to half by the end.
+const FADE_MAX = 0.5
+const fadeFactor = (setIndex, totalSets) => {
+  const progress = totalSets > 1 ? setIndex / (totalSets - 1) : 0
+  return 1 - FADE_MAX * Math.max(0, (progress - 0.5) / 0.5)
+}
+
 // Reps for normal exercises; hold seconds (multiples of 5) for timed ones.
-export function rollTarget(level, ex, category) {
+export function rollTarget(level, ex, category, setIndex = 0, totalSets = 1) {
   if (ex.timed) {
     const [min, max] = HOLD_SECONDS[level]
     return rand(min / 5, max / 5) * 5
+  }
+  if (ex.reps) {
+    const reps = rand(...ex.reps[level])
+    return Math.max(1, Math.round(ex.fades ? reps * fadeFactor(setIndex, totalSets) : reps))
   }
   const reps = rand(...LEVELS[level].reps[ex.tier])
   return Math.max(1, Math.round(reps * (REP_SCALE[category] ?? 1)))
@@ -202,15 +232,34 @@ export function chipLabel(w) {
   return clip(label)
 }
 
-export const levelLabel = (w) => LEVELS[w.level]?.label ?? CORE_LEVELS[w.level]?.label ?? (w.level === 'hiit' ? 'HIIT' : w.level === 'interval' ? 'Interval' : 'Custom')
+export const levelLabel = (w) => LEVELS[w.level]?.label ?? CORE_LEVELS[w.level]?.label ?? (w.level === 'hiit' ? 'HIIT' : w.level === 'interval' ? 'Interval' : w.level === 'emom' ? 'EMOM' : 'Custom')
 
 export const fmtSet = (s) => {
-  if (s.planned != null) return `${s.actual}/${s.planned}${isTimed(s) ? 's' : ''}`
+  if (s.planned != null) return `${s.actual}/${s.planned}${isTimed(s) ? 's' : ''}${s.weight != null ? ` @ ${+s.weight.toFixed(2)}kg` : ''}`
   const base = isTimed(s) ? `${s.actual}s` : `${s.actual} reps`
   return s.weight != null ? `${base} @ ${s.weight}kg` : base
 }
 
 export const totalTonnage = (sets) => sets.reduce((a, s) => a + (s.weight && !isTimed(s) ? s.weight * s.actual : 0), 0)
+
+// Added load (e.g. a weighted vest) for shuffler workouts; null means bodyweight.
+export const WEIGHT_PRESETS = [5, 10, 15, 20]
+export const WEIGHT_STEP = 1
+export const fmtKg = (kg) => `${+kg.toFixed(2)} kg`
+// Load can change mid-workout, so it lives on each set. "+10 kg", "+5–10 kg", or null if all bodyweight.
+export function loadLabel(sets) {
+  const kgs = sets.map((s) => s.weight).filter((x) => x != null)
+  if (!kgs.length) return null
+  const lo = Math.min(...kgs), hi = Math.max(...kgs)
+  return lo === hi ? `+${fmtKg(lo)}` : `+${+lo.toFixed(2)}–${fmtKg(hi)}`
+}
+// The weight you finished your last shuffler workout with, so the picker opens on what you usually wear.
+export const lastShufflerLoad = (history) => {
+  const shuffler = history.filter((x) => CATEGORIES[x.category] && !CATEGORIES[x.category].mode)
+  const lastKg = (w) => w?.sets.findLast((s) => s.weight != null)?.weight
+  const kg = lastKg(shuffler.findLast((w) => lastKg(w) != null)) ?? 10
+  return { weighted: lastKg(shuffler.at(-1)) != null, kg }
+}
 
 export const isIntervalWorkout = (w) => w.level === 'interval'
 export const intervalTitle = (step, i) => step.name || `Interval ${i + 1}`

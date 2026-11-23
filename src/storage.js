@@ -46,6 +46,7 @@ export async function loadUserData(user) {
     customExercises: data.customExercises ?? [],
     customIntervals: data.customIntervals ?? [],
     daily: data.daily ?? { done: [], picks: {} },
+    skillPlans: data.skillPlans ?? {},
     history: workouts.docs.map((d) => d.data()).sort((a, b) => a.date.localeCompare(b.date)),
   }
 }
@@ -76,5 +77,8 @@ export const getCustomExercises = () => cache.customExercises
 export const saveCustomExercises = (customExercises) => { cache.customExercises = customExercises; patchUser({ customExercises }) }
 export const getCustomIntervals = () => cache.customIntervals
 export const saveCustomIntervals = (customIntervals) => { cache.customIntervals = customIntervals; patchUser({ customIntervals }) }
+// Elite skill plans by skill id; merge writes only touch the one skill, and null clears it.
+export const getSkillPlans = () => cache.skillPlans ?? {}
+export const saveSkillPlan = (id, plan) => { cache.skillPlans = { ...getSkillPlans(), [id]: plan }; patchUser({ skillPlans: { [id]: plan } }) }
 export const getDaily = () => cache.daily
 export const saveDaily = (daily) => { cache.daily = daily; patchUser({ daily }) }

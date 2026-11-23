@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { runBackHandler } from './backBus.js'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import { CATEGORIES, CORE_LEVELS, CORE_ROUND_OPTIONS, LEVELS } from './data.js'
+import { CATEGORIES, CORE_LEVELS, CORE_ROUND_OPTIONS, EMOM_MINUTE_OPTIONS, EMOM_REP_OPTIONS, LEVELS, WEIGHT_PRESETS, WEIGHT_STEP, fmtKg, lastShufflerLoad } from './data.js'
 import { auth } from './firebase.js'
 import { clearUserData, getCustomIntervals, getCustomWorkouts, getHistory, getProfile, getUid, loadUserData, saveFriendWorkout, saveProfile, saveWorkout } from './storage.js'
 import { clearFriends, getFriends, getIncoming, loadFriends, publishDirectory } from './friends.js'
@@ -23,12 +23,14 @@ import Create from './Create.jsx'
 import CustomSession from './CustomSession.jsx'
 import CoreSession from './Core.jsx'
 import HiitSession from './Hiit.jsx'
+import EmomSession from './Emom.jsx'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 
 const FORGING_MS = 2800
 const HIIT_ROUND_OPTIONS = [1, 2, 3, 4, 5]
+
 function Divider({ label }) {
   return (
     <div className="flex items-center gap-3 pt-2">
@@ -56,6 +58,11 @@ export default function App() {
   const [historySlide, setHistorySlide] = useState('log')
   const [intervalWorkout, setIntervalWorkout] = useState(null)
   const [crew, setCrew] = useState(null) // [{ uid, name }] with the host first, or null for solo
+  const [weighted, setWeighted] = useState(false)
+  const [kg, setKg] = useState('10')
+  const [emomReps, setEmomReps] = useState(2)
+  const [emomMinutes, setEmomMinutes] = useState(15)
+  const weight = weighted ? parseFloat(kg) || null : null // kg of added load, or null for bodyweight
 
   // Android back button: one history entry is held open on every screen except home, so back runs the
   // current screen's own back action; on home there is no entry, so back closes the app.
@@ -183,7 +190,12 @@ export default function App() {
     const openCategory = (key) => {
       const c = CATEGORIES[key]
       setCategory(key)
-      setScreen(c.mode === 'core' ? 'coreLevel' : c.mode === 'hiit' ? 'hiitRounds' : 'level')
+      if (!c.mode || c.mode === 'emom') {
+        const last = lastShufflerLoad(getHistory())
+        setWeighted(last.weighted)
+        setKg(String(last.kg))
+      }
+      setScreen(c.mode === 'core' ? 'coreLevel' : c.mode === 'hiit' ? 'hiitRounds' : 'load')
     }
     const categoryButton = (key) => {
       const c = CATEGORIES[key]
@@ -203,6 +215,7 @@ export default function App() {
         {Object.keys(CATEGORIES).filter((k) => !CATEGORIES[k].mode || CATEGORIES[k].mode === 'core').map(categoryButton)}
         <Divider label="Interval training" />
         {categoryButton('hiit')}
+        {categoryButton('muscleups')}
         {intervals.map((w) => (
           <Button key={w.id} variant="secondary" className="cat" style={{ '--c': w.color }} onClick={() => { setIntervalWorkout(w); setScreen('intervalSession') }}>
             {w.name}<div className="muted" style={sub}>interval · {w.intervals.length} intervals × {w.rounds} {w.rounds === 1 ? 'round' : 'rounds'}</div>
@@ -283,9 +296,66 @@ export default function App() {
       }}
     />
   )
+  if (screen === 'load') {
+    const step = (d) => setKg(String(Math.max(0, +((parseFloat(kg) || 0) + d).toFixed(2))))
+    return (
+      <div className="screen">
+        <Header title="Bodyweight or weighted?" onBack={() => setScreen('category')} />
+        <p className="muted" style={{ margin: 0 }}>{CATEGORIES[category].label}</p>
+        <ToggleGroup type="single" value={weighted ? 'weighted' : 'bodyweight'} onValueChange={(v) => v && setWeighted(v === 'weighted')} className="grid grid-cols-2 gap-3">
+          <ToggleGroupItem value="bodyweight">Bodyweight</ToggleGroupItem>
+          <ToggleGroupItem value="weighted">Weighted</ToggleGroupItem>
+        </ToggleGroup>
+        {weighted && (
+          <>
+            <p className="muted" style={{ margin: 0 }}>Added weight (vest, belt, backpack…)</p>
+            <div className="row" style={{ alignItems: 'center' }}>
+              <Button variant="secondary" style={{ flex: "0 0 64px" }} aria-label={`Minus ${WEIGHT_STEP} kg`} onClick={() => step(-WEIGHT_STEP)}>−</Button>
+              <Input className="text-center font-[family-name:var(--display)] text-[2.2rem] font-bold" type="number" inputMode="decimal" min="0" step="0.5" aria-label="Weight in kg" value={kg} onChange={(e) => setKg(e.target.value)} />
+              <Button variant="secondary" style={{ flex: "0 0 64px" }} aria-label={`Plus ${WEIGHT_STEP} kg`} onClick={() => step(WEIGHT_STEP)}>+</Button>
+            </div>
+            <ToggleGroup type="single" value={String(parseFloat(kg))} onValueChange={(v) => v && setKg(v)} className="grid grid-cols-4 gap-3">
+              {WEIGHT_PRESETS.map((n) => <ToggleGroupItem key={n} value={String(n)}>{n} kg</ToggleGroupItem>)}
+            </ToggleGroup>
+          </>
+        )}
+        <div style={{ flex: 1 }} />
+        <Button disabled={weighted && !weight} onClick={() => setScreen(CATEGORIES[category].mode === 'emom' ? 'emomSetup' : 'level')}>Continue · {weight ? `+${fmtKg(weight)}` : 'Bodyweight'}</Button>
+      </div>
+    )
+  }
+  if (screen === 'emomSetup') return (
+    <div className="screen">
+      <Header title="Muscle-up EMOM" onBack={() => setScreen('load')} />
+      <p className="muted" style={{ margin: 0 }}>At the top of every minute, do your reps, then rest until the next minute. Grips alternate regular / close each minute.</p>
+      <p className="muted" style={{ margin: 0 }}>Reps per minute</p>
+      <ToggleGroup type="single" value={String(emomReps)} onValueChange={(v) => v && setEmomReps(Number(v))} className="grid grid-cols-5 gap-3">
+        {EMOM_REP_OPTIONS.map((n) => <ToggleGroupItem key={n} value={String(n)}>{n}</ToggleGroupItem>)}
+      </ToggleGroup>
+      <p className="muted" style={{ margin: 0 }}>Minutes</p>
+      <ToggleGroup type="single" value={String(emomMinutes)} onValueChange={(v) => v && setEmomMinutes(Number(v))} className="grid grid-cols-5 gap-3">
+        {EMOM_MINUTE_OPTIONS.map((n) => <ToggleGroupItem key={n} value={String(n)}>{n}</ToggleGroupItem>)}
+      </ToggleGroup>
+      <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>Pick reps you can hit every minute without failing. A missed minute drops the rest of the session by 1 rep.</p>
+      <div style={{ flex: 1 }} />
+      <Button onClick={() => setScreen('emomSession')}>Continue · up to {emomReps * emomMinutes} muscle-ups</Button>
+    </div>
+  )
+  if (screen === 'emomSession') return (
+    <EmomSession
+      reps={emomReps}
+      minutes={emomMinutes}
+      weight={weight}
+      onBack={() => setScreen('emomSetup')}
+      onFinish={(logged, duration) => {
+        setPending({ id: Date.now(), date: new Date().toISOString(), category, level: 'emom', sets: logged, duration })
+        setScreen('summary')
+      }}
+    />
+  )
   if (screen === 'level') return (
     <div className="screen">
-      <Header title="Choose level" onBack={() => setScreen('category')} />
+      <Header title="Choose level" onBack={() => setScreen('load')} />
       {Object.entries(LEVELS).map(([key, l]) => (
         <Button key={key} variant="secondary" onClick={() => { setLevel(key); setSets(Math.round((l.sets[0] + l.sets[1]) / 2)); setScreen('sets') }}>
           {l.label}<div className="muted" style={{ fontSize: '.8rem', fontWeight: 400 }}>{l.sets[0]}–{l.sets[1]} sets</div>
@@ -321,6 +391,7 @@ export default function App() {
       level={level}
       totalSets={sets}
       crew={crew}
+      weight={weight}
       onBack={() => setScreen(getFriends().length ? 'crew' : 'sets')}
       onFinish={(logged, duration) => {
         const id = Date.now()
@@ -346,9 +417,11 @@ export default function App() {
       onSave={() => {
         if (pending.group) {
           // One save writes every participant's own copy: same id and group, their own reps per set.
+          // The added weight is the host's own load; friends' copies are logged as bodyweight.
           pending.group.participants.forEach(({ uid }) => {
-            const copy = { ...pending, sets: pending.sets.map(({ results, ...s }) => ({ ...s, ...results[uid] })) }
-            if (uid === pending.group.hostUid) saveWorkout(copy)
+            const host = uid === pending.group.hostUid
+            const copy = { ...pending, sets: pending.sets.map(({ results, weight: kg, ...s }) => ({ ...s, ...(host && kg != null && { weight: kg }), ...results[uid] })) }
+            if (host) saveWorkout(copy)
             else saveFriendWorkout(uid, copy)
           })
         } else saveWorkout(pending)

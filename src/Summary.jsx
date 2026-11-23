@@ -1,4 +1,4 @@
-import { catInfo, fmtSet, isTimed, levelLabel, muscleCounts, totalReps, totalTonnage } from './data.js'
+import { catInfo, loadLabel, fmtSet, isTimed, levelLabel, muscleCounts, totalReps, totalTonnage } from './data.js'
 import Header from './Header.jsx'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -19,7 +19,7 @@ export default function Summary({ workout, onSave, onDiscard }) {
   return (
     <div className="screen">
       <Header title="Summary" />
-      <div><Badge style={{ '--c': c.color }}>{c.label}</Badge> <span className="muted">· {levelLabel(workout)}</span></div>
+      <div><Badge style={{ '--c': c.color }}>{c.label}</Badge> <span className="muted">· {levelLabel(workout)}{loadLabel(sets) && ` · ${loadLabel(sets)}`}</span></div>
       <div className="stats">
         <Card className="stat"><b>{sets.length}</b>Sets</Card>
         <Card className="stat"><b>{totalReps(sets)}</b>Reps</Card>

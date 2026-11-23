@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, categoryForSet, candidatePool, spinPool, pickExercise, rollTarget, totalSeconds, playerLevel, gamblesForLevel } from './data.js'
+import { CATEGORIES, WEIGHT_STEP, fmtKg, categoryForSet, candidatePool, spinPool, pickExercise, rollTarget, totalSeconds, playerLevel, gamblesForLevel } from './data.js'
 import { gamblesLeftToday, spendGamble } from './daily.js'
 import { getHistory } from './storage.js'
 import { SessionBack } from './Header.jsx'
@@ -19,7 +19,11 @@ const fmt = (s) => {
 
 // crew: null for solo, otherwise [{ uid, name }] with the host first. In a group every set is shared;
 // Bank credits everyone with the target, and tapping a person's chip logs a lower number for just them.
-export default function Session({ category, level, totalSets, crew = null, onFinish, onBack }) {
+// weight: starting kg of added load (e.g. a vest), or null for bodyweight. It can be changed between sets;
+// each set records the load it was done with, and the change carries over to the following sets.
+export default function Session({ category, level, totalSets, crew = null, weight: startWeight = null, onFinish, onBack }) {
+  const [weight, setWeight] = useState(startWeight)
+  const [weightDraft, setWeightDraft] = useState(null) // string while the load editor is open
   const budget = totalSeconds(totalSets)
   const [startedAt, setStartedAt] = useState(null)
   useBackHandler(onBack, !startedAt)
@@ -74,7 +78,7 @@ export default function Session({ category, level, totalSets, crew = null, onFin
   const land = (exclude) => {
     clearInterval(spinTimer.current)
     const ex = pickExercise(pool(), exclude, level === 'intermediate')
-    const planned = rollTarget(level, ex, category)
+    const planned = rollTarget(level, ex, category, setIndex, totalSets)
     setCurrent({ ...ex, planned, basePlanned: planned, category: categoryForSet(category, setIndex) })
     setHoldLeft(ex.timed ? planned : 0)
     setHoldRunning(false)
@@ -96,6 +100,7 @@ export default function Session({ category, level, totalSets, crew = null, onFin
     const entry = {
       exercise: current.name, category: current.category, tier: current.tier, muscles: current.muscles,
       unit: current.timed ? 'sec' : 'reps', planned: current.planned, actual, status,
+      ...(weight != null && { weight }),
     }
     if (crew) {
       entry.results = Object.fromEntries(crew.map(({ uid }) => {
@@ -171,7 +176,34 @@ export default function Session({ category, level, totalSets, crew = null, onFin
           <span className={`timer ${remaining < 0 ? 'over' : ''}`}>{fmt(startedAt ? remaining : budget)}</span>
         </div>
       </div>
-      {category === 'combo' && <div><Badge style={{ '--c': cat.color }}>{cat.label}</Badge></div>}
+      {(category === 'combo' || phase !== 'pre') && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {category === 'combo' && <Badge style={{ '--c': cat.color }}>{cat.label}</Badge>}
+          {phase !== 'pre' && (
+            <button type="button" className={`crew-chip ${weightDraft != null ? 'on' : ''}`} style={{ marginLeft: 'auto' }} aria-label="Change weight"
+              onClick={() => setWeightDraft(weightDraft != null ? null : String(weight ?? ''))}>
+              Load<b>{weight != null ? `+${fmtKg(weight)}` : 'BW'}</b>
+            </button>
+          )}
+        </div>
+      )}
+      {weightDraft != null && (() => {
+        const step = (d) => setWeightDraft(String(Math.max(0, +((parseFloat(weightDraft) || 0) + d).toFixed(2))))
+        const apply = () => { const n = parseFloat(weightDraft); setWeight(n > 0 ? n : null); setWeightDraft(null) }
+        return (
+          <>
+            <div className="row" style={{ alignItems: 'center' }}>
+              <Button variant="secondary" style={{ flex: '0 0 56px' }} aria-label={`Minus ${WEIGHT_STEP} kg`} onClick={() => step(-WEIGHT_STEP)}>−</Button>
+              <Input className="text-center font-[family-name:var(--display)] text-[1.6rem] font-bold" type="number" inputMode="decimal" min="0" step="0.5" autoFocus placeholder="0 = bodyweight" aria-label="Weight in kg" value={weightDraft} onChange={(e) => setWeightDraft(e.target.value)} />
+              <Button variant="secondary" style={{ flex: '0 0 56px' }} aria-label={`Plus ${WEIGHT_STEP} kg`} onClick={() => step(WEIGHT_STEP)}>+</Button>
+            </div>
+            <div className="row">
+              <Button variant="muted" onClick={() => setWeightDraft(null)}>Cancel</Button>
+              <Button onClick={apply}>{parseFloat(weightDraft) > 0 ? `Use +${fmtKg(parseFloat(weightDraft))}` : 'Use bodyweight'}</Button>
+            </div>
+          </>
+        )
+      })()}
 
       <div className={`slot ${phase === 'spinning' ? 'spin' : ''}`} style={current && phase !== 'spinning' ? { paddingBottom: 56 } : undefined}>
         {display}
